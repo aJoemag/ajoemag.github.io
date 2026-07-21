@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Backup Extractor & SQLite Viewer</title>
+    <!-- Load pako for zlib decompression -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <!-- Load sql.js for in-browser SQLite -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        #status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            background: #eef;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            table-layout: fixed;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+            word-wrap: break-word;
+        }
+
+        th {
+            background: #f4f4f4;
+        }
+
+        .file-input-wrapper {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            text-align: center;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .file-input-wrapper.drag-active {
+            border-color: #4a90e2;
+            background: #f0f7ff;
+        }
+
+        .results-section {
+            margin-top: 2rem;
+            scroll-margin-top: 1rem;
+        }
+
+        .results-section h2 {
+            margin-bottom: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .empty-state {
+            color: #777;
+            font-style: italic;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .result-card {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 1rem;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .result-card-top {
+            display: flex;
+            gap: 0.85rem;
+            align-items: flex-start;
+        }
+
+        .poster-thumbnail {
+            width: 80px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 10px;
+            display: block;
+            flex-shrink: 0;
+            background: #e5e7eb;
+        }
+
+        .poster-placeholder {
+            width: 80px;
+            height: 110px;
+            border-radius: 10px;
+            background: #e5e7eb;
+            color: #6b7280;
+            display: grid;
+            place-items: center;
+            font-size: 0.8rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0 0 0.35rem 0;
+        }
+
+        .result-meta {
+            color: #4b5563;
+            font-size: 0.92rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .results-nav {
+            position: sticky;
+            top: 0.75rem;
+            z-index: 20;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.65rem;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .results-nav a {
+            text-decoration: none;
+            color: #2563eb;
+            font-weight: 600;
+            padding: 0.45rem 0.75rem;
+            border-radius: 999px;
+            background: #eff6ff;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 600px) {
+            .results-nav {
+                top: 0.5rem;
+                border-radius: 16px;
+                justify-content: center;
+            }
+
+            .results-nav a {
+                flex: 1 1 calc(50% - 0.5rem);
+                text-align: center;
+            }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 999px;
+            background: #f3f4f6;
+            color: #374151;
+            font-size: 0.8rem;
+            border: 1px solid transparent;
+        }
+
+        .badge.badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .badge.badge-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+
+        .badge.badge-success {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .result-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .result-links a {
+            text-decoration: none;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .list-contents {
+            display: grid;
+            gap: 0.6rem;
+            margin-top: 0.25rem;
+        }
+
+        .list-subcard {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 0.7rem;
+            background: #f8fafc;
+        }
+
+        .list-subcard-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin: 0 0 0.35rem 0;
+        }
+
+        .list-subcard-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            font-size: 0.82rem;
+        }
+
+        .warning {
+            color: #a70000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <h1>TVTime: recover data from App</h1>
+        <p>Select a DioCache.db file or an unencrypted android backup of the TVTime App.
+        </p>
+        <details
+            style="margin: 1rem 0 1.25rem; padding: 0.9rem 1rem; border: 1px solid #e0e0e0; border-radius: 10px; background: #fafafa;">
+            <summary style="cursor: pointer; font-weight: 600;">For Apple devices:
+            </summary>
+            <div style="margin-top: 0.8rem; font-size: 0.95rem; line-height: 1.6;">
+                Instructions by <a href="https://gist.github.com/xjki/1ed43f7f12ee29bd34f5e6805ac6e93a">xjki</a>:
+                <ol>
+                    <li>Connect your iPhone to your Mac.</li>
+                    <li>In the Files app, select your phone and in the <em>General</em> tab make an <em>unencrypted</em>
+                        phone backup to your Mac.</li>
+                    <li>After the backup is completed, select <em>Manage backups</em>, choose the backup you just made,
+                        right-click it and select <em>Open in Finder</em>.</li>
+                    <li>Download and launch <a href="https://imazing.com/" target="_blank"
+                            rel="noopener noreferrer">iMazing</a>.</li>
+                    <li>Drag the phone backup folder from Finder into iMazing (grant full disk access if prompted).</li>
+                    <li>In iMazing, go to <em>Data</em> → <em>File system</em> → <em>Apps</em> and find the TVTime app.
+                    </li>
+                    <li>Select the <em>Documents</em> folder under the TVTime app and choose <em>DioCache.db</em> (sort
+                        by size; it will be the biggest file).</li>
+                    <li>Right-click it and use <em>Copy to Mac</em>, saving it in your Downloads folder.</li>
+                    <li>Choose the saved DioCache.db file on this webpage below</li>
+                </ol>
+            </div>
+        </details>
+        <details
+            style="margin: 1rem 0 1.25rem; padding: 0.9rem 1rem; border: 1px solid #e0e0e0; border-radius: 10px; background: #fafafa;">
+            <summary style="cursor: pointer; font-weight: 600;">How to get an Android backup or the DioCache.db file
+            </summary>
+            <div style="margin-top: 0.8rem; font-size: 0.95rem; line-height: 1.6;">
+                <strong>On Xiaomi:</strong> In <em>Settings → About phone → Backup and restore</em>, create a backup.
+                <br>
+                <strong>On Pixel and Samsung:</strong> it is probably not possible to get an unencrypted backup.
+                <br>
+                <strong>On other Android devices:</strong> you may need to research vendor-specific ways to back up the
+                app.
+                <br>
+                <strong>On rooted devices:</strong> get the DioCache.db file from
+                <code>/storage/emulated/0/Android/data/com.tozelabs.tvshowtime</code>.
+                <br>
+                <strong>On older devices:</strong> Shizuku + Solid Explorer might work.
+            </div>
+        </details>
+
+        <!-- Accept any file, as we rely on magic bytes now -->
+
+        <div class="file-input-wrapper" id="fileInputWrapper">
+            <input type="file" id="fileInput" />
+            <p>Or drag and drop the file here.</p>
+        </div>
+
+        <div id="downloadBox"
+            style="display: none; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 0.75rem 0 0.5rem;">
+            <button id="downloadSeriesCsvBtn" type="button"
+                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
+                Trakt CSV (Series)</button>
+            <button id="downloadMoviesCsvBtn" type="button"
+                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
+                Trakt CSV (Movies)</button>
+            <div style="display: inline-block;">Importable into <a
+                    href="https://app.trakt.tv/settings/data?source=trakt-csv&mode=media" target="_blank">Trakt</a>
+            </div>
+            <div class="warning" style="font-size: 0.9rem; line-height: 1.5;">
+                Warning: this export is best-effort only and may be incomplete or inaccurate. Review the CSV before
+                importing it into Trakt.
+            </div>
+        </div>
+
+        <div id="status">Waiting for file...</div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const resultsEl = document.getElementById('results');
+        const fileInput = document.getElementById('fileInput');
+        const fileInputWrapper = document.getElementById('fileInputWrapper');
+        const downloadSeriesCsvBtn = document.getElementById('downloadSeriesCsvBtn');
+        const downloadMoviesCsvBtn = document.getElementById('downloadMoviesCsvBtn');
+        const downloadBox = document.getElementById('downloadBox');
+        let exportData = null;
+
+        function log(msg) {
+            statusEl.textContent += msg + '\n';
+            console.log(msg);
+            statusEl.scrollTop = statusEl.scrollHeight;
+        }
+
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
+
+            const dataTransfer = new DataTransfer();
+            Array.from(files).forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileInputWrapper.addEventListener(eventName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInputWrapper.classList.add('drag-active');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileInputWrapper.addEventListener(eventName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (eventName === 'dragleave') {
+                    fileInputWrapper.classList.remove('drag-active');
+                    return;
+                }
+
+                fileInputWrapper.classList.remove('drag-active');
+                handleFiles(e.dataTransfer?.files || []);
+            });
+        });
+
+        fileInput.addEventListener('change', async function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            statusEl.textContent = '';
+            resultsEl.innerHTML = '';
+            log(`Loading file: ${file.name} (${file.size} bytes)...`);
+
+            const reader = new FileReader();
+            reader.onload = async function (event) {
+                try {
+                    const arrayBuffer = event.target.result;
+                    const uint8View = new Uint8Array(arrayBuffer);
+                    let dbBuffer = null;
+
+                    // 1. Check for SQLite Magic (First 16 bytes: "SQLite format 3\000")
+                    const SQLITE_MAGIC = "SQLite format 3\x00";
+                    let isSqlite = true;
+                    if (uint8View.length >= 16) {
+                        for (let i = 0; i < 16; i++) {
+                            if (uint8View[i] !== SQLITE_MAGIC.charCodeAt(i)) {
+                                isSqlite = false;
+                                break;
+                            }
+                        }
+                    } else {
+                        isSqlite = false;
+                    }
+
+                    if (isSqlite) {
+                        log("SQLite magic signature detected. Loading directly...");
+                        dbBuffer = uint8View;
+                    } else {
+                        // 2. Scan first 512 bytes for Android Backup Magic ("ANDROID BACKUP\n")
+                        const AB_MAGIC = "ANDROID BACKUP\n";
+                        const searchLimit = Math.min(uint8View.length, 512);
+
+                        let headerStr = "";
+                        for (let i = 0; i < searchLimit; i++) {
+                            headerStr += String.fromCharCode(uint8View[i]);
+                        }
+
+                        const abOffset = headerStr.indexOf(AB_MAGIC);
+
+                        if (abOffset !== -1) {
+                            log(`Android Backup magic signature found at offset ${abOffset}. Starting extraction...`);
+                            dbBuffer = extractFromBackup(uint8View, abOffset);
+                        } else {
+                            throw new Error("File format not recognized. Magic signatures for neither SQLite nor Android Backup were found.");
+                        }
+                    }
+
+                    if (!dbBuffer) {
+                        throw new Error("Could not load or locate the database buffer.");
+                    }
+
+                    await executeQuery(dbBuffer);
+
+                } catch (err) {
+                    log(`ERROR: ${err.message}`);
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Updated extraction logic to handle a dynamic start offset
+        function extractFromBackup(uint8View, startOffset) {
+            let offset = startOffset;
+
+            function readLine() {
+                let line = "";
+                while (offset < uint8View.length) {
+                    let c = uint8View[offset++];
+                    if (c === 10) break; // \n
+                    line += String.fromCharCode(c);
+                }
+                return line;
+            }
+
+            const magic = readLine(); // This will consume "ANDROID BACKUP"
+            const version = readLine();
+            const compressed = readLine();
+            const encryption = readLine();
+
+            log(`Version: ${version}, Compressed: ${compressed}, Encryption: ${encryption}`);
+
+            if (encryption !== "none") {
+                throw new Error("Encrypted backups are not supported in this client-side tool.");
+            }
+
+            let payload = uint8View.subarray(offset);
+            if (compressed === "1") {
+                log("Decompressing ZLIB payload (this may take a moment)...");
+                payload = pako.inflate(payload);
+            }
+
+            log(`Extracted TAR size: ${payload.length} bytes. Searching for DioCache.db...`);
+
+            let tarOffset = 0;
+            while (tarOffset < payload.length - 512) {
+                // Read file name (first 100 bytes of the 512-byte block)
+                let nameBytes = payload.subarray(tarOffset, tarOffset + 100);
+                let nameStr = String.fromCharCode.apply(null, nameBytes).replace(/\0.*/g, '');
+
+                if (!nameStr) break;
+
+                // Read file size (bytes 124 to 135, octal string)
+                let sizeBytes = payload.subarray(tarOffset + 124, tarOffset + 136);
+                let sizeStr = String.fromCharCode.apply(null, sizeBytes).trim().replace(/\0.*/g, '');
+                let size = parseInt(sizeStr, 8);
+
+                tarOffset += 512; // Skip the header block
+
+                if (nameStr.endsWith("DioCache.db")) {
+                    log(`Found database: ${nameStr} (${size} bytes)`);
+                    return payload.subarray(tarOffset, tarOffset + size);
+                }
+
+                // Skip the file data blocks (padded to 512 bytes)
+                tarOffset += Math.ceil(size / 512) * 512;
+            }
+
+            throw new Error("DioCache.db could not be found inside the backup.");
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatValue(value, fallback = '—') {
+            if (value === null || value === undefined || value === '') {
+                return fallback;
+            }
+            if (typeof value === 'boolean') {
+                return value ? 'Yes' : 'No';
+            }
+            if (value instanceof Date && !Number.isNaN(value.getTime())) {
+                return value.toLocaleString();
+            }
+            if (typeof value === 'object') {
+                return JSON.stringify(value);
+            }
+            return String(value);
+        }
+
+        function getPosterUrl(poster) {
+            if (!poster) return '';
+            if (typeof poster === 'string') return poster;
+            if (Array.isArray(poster)) return getPosterUrl(poster[0]);
+            if (typeof poster === 'object') {
+                if (typeof poster.url === 'string') return poster.url;
+                if (typeof poster.poster?.url === 'string') return poster.poster.url;
+            }
+            return '';
+        }
+
+        function createLink(url, label) {
+            if (!url) return '<span class="muted">—</span>';
+            return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`;
+        }
+
+        function toIsoDate(value) {
+            if (value === null || value === undefined || value === '') {
+                return '';
+            }
+            if (value instanceof Date && !Number.isNaN(value.getTime())) {
+                return value.toISOString();
+            }
+            if (typeof value === 'number') {
+                const date = new Date(value * 1000);
+                return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+            }
+            if (typeof value === 'string') {
+                const trimmed = value.trim();
+                if (!trimmed) return '';
+                const parsed = new Date(trimmed);
+                if (!Number.isNaN(parsed.getTime())) {
+                    return parsed.toISOString();
+                }
+                const numeric = Number(trimmed);
+                if (!Number.isNaN(numeric)) {
+                    const date = new Date(numeric * 1000);
+                    return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+                }
+            }
+            return '';
+        }
+
+        function escapeCsv(value) {
+            return String(value ?? '').replace(/"/g, '""');
+        }
+
+        function buildTraktCsv(items, type) {
+            const rows = [];
+
+            const pushRow = (item) => {
+                const imdbId = item?.imdb_id || '';
+                const tvdbId = item?.tvdb_id || item?.id || '';
+                const watchedAt = type === 'show'
+                    ? (item?.is_up_to_date ? toIsoDate(item?.watched_at ?? item?.last_watched) : '')
+                    : toIsoDate(item?.watched_at ?? item?.last_watched);
+                let watchlistedAt = toIsoDate(item?.added_at ?? item?.last_added ?? item?.created_at);
+
+                if ((!imdbId && !tvdbId) || (!watchedAt && !watchlistedAt)) {
+                    return;
+                }
+                if (watchedAt) {
+                    watchlistedAt = '';
+                }
+
+                rows.push({
+                    imdb_id: imdbId,
+                    tvdb_id: tvdbId,
+                    type,
+                    watched_at: watchedAt,
+                    watchlisted_at: watchlistedAt
+                });
+            };
+
+            Object.values(items || {}).forEach(item => pushRow(item));
+
+            if (rows.length === 0) {
+                return '';
+            }
+
+            const columns = ['imdb_id', 'tvdb_id', 'type', 'watched_at', 'watchlisted_at'];
+            const lines = [columns.join(',')];
+            for (const row of rows) {
+                const values = columns.map(column => `${escapeCsv(row[column] || '')}`);
+                lines.push(values.join(','));
+            }
+            return lines.join('\n');
+        }
+
+        function downloadCsvFile(items, type, filename) {
+            const csv = buildTraktCsv(items, type);
+            if (!csv) {
+                alert('No importable data was found to export for this category.');
+                return;
+            }
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadSeriesCsv() {
+            if (!exportData) {
+                return;
+            }
+            downloadCsvFile(exportData.shows, 'show', 'trakt-series.csv');
+        }
+
+        function downloadMoviesCsv() {
+            if (!exportData) {
+                return;
+            }
+            const movies = { ...exportData.movies, ...exportData.towatchMovies };
+            downloadCsvFile(movies, 'movie', 'trakt-movies.csv');
+        }
+
+        downloadSeriesCsvBtn.addEventListener('click', downloadSeriesCsv);
+        downloadMoviesCsvBtn.addEventListener('click', downloadMoviesCsv);
+
+        function renderCards(title, items, cardRenderer, sectionId) {
+            if (!items || items.length === 0) {
+                return `<section class="results-section" id="${sectionId}"><h2>${escapeHtml(title)}</h2><p class="empty-state">No entries found.</p></section>`;
+            }
+
+            const cardsHtml = items.map(item => `<article class="result-card">${cardRenderer(item)}</article>`).join('');
+
+            return `
+                <section class="results-section" id="${sectionId}">
+                    <h2>${escapeHtml(title)}</h2>
+                    <div class="result-grid">${cardsHtml}</div>
+                </section>
+            `;
+        }
+
+        function getLastWatchedValue(item) {
+            if (item?.last_watched instanceof Date && !Number.isNaN(item.last_watched.getTime())) {
+                return item.last_watched.getTime();
+            }
+            if (item?.watched_at instanceof Date && !Number.isNaN(item.watched_at.getTime())) {
+                return item.watched_at.getTime();
+            }
+            if (item?.watchStatus?.last_watched instanceof Date && !Number.isNaN(item.watchStatus.last_watched.getTime())) {
+                return item.watchStatus.last_watched.getTime();
+            }
+            return -Infinity;
+        }
+
+        function sortByLastWatched(items) {
+            return [...items].sort((a, b) => getLastWatchedValue(b) - getLastWatchedValue(a));
+        }
+
+        function renderResults(shows, movies, towatchMovies, user, lists) {
+            exportData = { shows, movies, towatchMovies };
+            const hasSeries = shows && Object.keys(shows).length > 0;
+            const hasMovies = (movies && Object.keys(movies).length > 0) || (towatchMovies && Object.keys(towatchMovies).length > 0);
+            downloadSeriesCsvBtn.style.display = hasSeries ? 'inline-block' : 'none';
+            downloadMoviesCsvBtn.style.display = hasMovies ? 'inline-block' : 'none';
+            downloadBox.style.display = (hasSeries || hasMovies) ? 'flex' : 'none';
+
+            const showRows = sortByLastWatched(Object.values(shows || {}).map(show => ({
+                ...show,
+                name: show.name ?? 'Unknown show',
+                posterUrl: getPosterUrl(show.poster),
+                tvdbUrl: show.tvdb_id ? `https://www.thetvdb.com/series/${show.tvdb_id}` : (show.id ? `https://www.thetvdb.com/series/${show.id}` : ''),
+                imdbUrl: show.imdb_id ? `https://www.imdb.com/title/${show.imdb_id}` : ''
+            })));
+
+            const movieRows = sortByLastWatched(Object.entries(movies || {}).map(([key, movie]) => ({
+                ...movie,
+                key,
+                name: movie.name ?? 'Unknown movie',
+                posterUrl: getPosterUrl(movie.poster),
+                imdbUrl: movie.imdb_id ? `https://www.imdb.com/title/${movie.imdb_id}` : '',
+                tvdbUrl: movie.tvdb_id ? `https://www.thetvdb.com/movies/${movie.tvdb_id}` : '',
+                googleUrl: movie.name ? '' : `https://www.google.com/search?q=${encodeURIComponent(key)}`
+            })));
+
+            const towatchRows = sortByLastWatched(Object.entries(towatchMovies || {}).map(([key, movie]) => ({
+                ...movie,
+                key,
+                name: movie.name ?? 'Unknown movie',
+                posterUrl: getPosterUrl(movie.poster),
+                imdbUrl: movie.imdb_id ? `https://www.imdb.com/title/${movie.imdb_id}` : '',
+                tvdbUrl: movie.tvdb_id ? `https://www.thetvdb.com/movies/${movie.tvdb_id}` : '',
+                googleUrl: movie.name ? '' : `https://www.google.com/search?q=${encodeURIComponent(key)}`
+            })));
+
+            const userRows = Object.entries(user || {}).map(([key, value]) => ({ key, value }));
+            const listRows = sortByLastWatched(Object.values(lists || {}).map(list => ({
+                ...list,
+                name: list.name ?? 'Unknown list',
+                posterUrl: getPosterUrl(list.posters?.[0] ?? list.poster),
+                createdAt: list.created_at ? new Date(list.created_at) : undefined,
+                updatedAt: list.updated_at ? new Date(list.updated_at) : undefined,
+                objectCount: Array.isArray(list.objects) ? list.objects.length : 0,
+                objectItems: Array.isArray(list.objects)
+                    ? sortByLastWatched(list.objects.map(item => ({
+                        ...item,
+                        name: item.name ?? item.meta?.name ?? 'Unknown item',
+                        posterUrl: getPosterUrl(item.poster),
+                        typeLabel: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : 'Item',
+                        watchStatus: item.watch_status ?? {}
+                    })))
+                    : []
+            })));
+
+            const navHtml = `
+                <nav class="results-nav">
+                    <a href="#shows-section">Shows</a>
+                    <a href="#movies-section">Movies</a>
+                    <a href="#towatch-section">To-Watch</a>
+                    <a href="#lists-section">Lists</a>
+                    <a href="#user-section">User</a>
+                </nav>
+            `;
+
+            const sectionsHtml = [
+                renderCards('Shows', showRows, show => `
+                    <div class="result-card-top">
+                        ${show.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(show.posterUrl)}" alt="${escapeHtml(show.name)}" />` : '<div class="poster-placeholder">No poster</div>'}
+                        <div>
+                            <h3 class="result-title">${escapeHtml(show.name)}</h3>
+                            <div class="result-meta">
+                                <span class="badge">Watched ${formatValue(show.watched_episode_count ?? '—', '—')}/${formatValue(show.aired_episode_count ?? '—', '—')} episodes</span>
+                                ${show.status ? `<span class="badge">${escapeHtml(show.status)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-meta">
+                        ${show.last_watched ? `<span class="badge">Last watched ${escapeHtml(formatValue(show.last_watched))}</span>` : ''}
+                        ${show.last_added ? `<span class="badge">Added ${escapeHtml(formatValue(show.last_added))}</span>` : ''}
+                        ${show.is_followed ? `<span class="badge">Followed</span>` : ''}
+                        ${show.is_up_to_date ? `<span class="badge">Up to date</span>` : ''}
+                        ${show.is_archived ? `<span class="badge badge-danger">Archived</span>` : ''}
+                        ${show.is_favorite ? `<span class="badge badge-success">Favorite</span>` : ''}
+                    </div>
+                    <div class="result-links">
+                        ${show.tvdbUrl ? createLink(show.tvdbUrl, 'TVDB') : ''}
+                        ${show.imdbUrl ? createLink(show.imdbUrl, 'IMDb') : ''}
+                    </div>
+                `, 'shows-section'),
+                renderCards('Movies', movieRows, movie => `
+                    <div class="result-card-top">
+                        ${movie.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(movie.posterUrl)}" alt="${escapeHtml(movie.name)}" />` : '<div class="poster-placeholder">No poster</div>'}
+                        <div>
+                            <h3 class="result-title">${escapeHtml(movie.name)}</h3>
+                            <div class="result-meta">
+                                ${movie.watched_at ? `<span class="badge">Watched ${escapeHtml(formatValue(movie.watched_at))}</span>` : ''}
+                                ${movie.added_at ? `<span class="badge">Added ${escapeHtml(formatValue(movie.added_at))}</span>` : ''}
+                                ${movie.rewatch_count !== undefined ? `<span class="badge">Rewatches ${escapeHtml(formatValue(movie.rewatch_count))}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-links">
+                        ${movie.tvdbUrl ? createLink(movie.tvdbUrl, 'TVDB') : ''}
+                        ${movie.imdbUrl ? createLink(movie.imdbUrl, 'IMDb') : ''}
+                        ${movie.googleUrl ? createLink(movie.googleUrl, 'Google') : ''}
+                    </div>
+                `, 'movies-section'),
+                renderCards('To-Watch Movies', towatchRows, movie => `
+                    <div class="result-card-top">
+                        ${movie.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(movie.posterUrl)}" alt="${escapeHtml(movie.name)}" />` : '<div class="poster-placeholder">No poster</div>'}
+                        <div>
+                            <h3 class="result-title">${escapeHtml(movie.name)}</h3>
+                            <div class="result-meta">
+                                ${movie.watched_at ? `<span class="badge">Watched ${escapeHtml(formatValue(movie.watched_at))}</span>` : ''}
+                                ${movie.added_at ? `<span class="badge">Added ${escapeHtml(formatValue(movie.added_at))}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-links">
+                        ${movie.tvdbUrl ? createLink(movie.tvdbUrl, 'TVDB') : ''}
+                        ${movie.imdbUrl ? createLink(movie.imdbUrl, 'IMDb') : ''}
+                        ${movie.googleUrl ? createLink(movie.googleUrl, 'Google') : ''}
+                    </div>
+                `, 'towatch-section'),
+                renderCards('Lists', listRows, list => `
+                    <div class="result-card-top">
+                        ${list.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(list.posterUrl)}" alt="${escapeHtml(list.name)}" />` : '<div class="poster-placeholder">No poster</div>'}
+                        <div>
+                            <h3 class="result-title">${escapeHtml(list.name)}</h3>
+                            <div class="result-meta">
+                                ${list.objectCount !== undefined ? `<span class="badge">${escapeHtml(formatValue(list.objectCount))} items</span>` : ''}
+                                ${list.createdAt ? `<span class="badge">Created ${escapeHtml(formatValue(list.createdAt))}</span>` : ''}
+                                ${list.updatedAt ? `<span class="badge">Updated ${escapeHtml(formatValue(list.updatedAt))}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    ${list.objectItems && list.objectItems.length > 0 ? `
+                        <div class="list-contents">
+                            ${list.objectItems.map(item => `
+                                <div class="list-subcard">
+                                    <h4 class="list-subcard-title">${escapeHtml(item.name)}</h4>
+                                    <div class="list-subcard-meta">
+                                        <span class="badge">${escapeHtml(item.typeLabel)}</span>
+                                        ${item.watchStatus?.watched_episode_count !== undefined ? `<span class="badge">Watched ${escapeHtml(formatValue(item.watchStatus.watched_episode_count))}/${escapeHtml(formatValue(item.watchStatus.aired_episode_count ?? '—'))}</span>` : ''}
+                                        ${item.watchStatus?.is_followed ? `<span class="badge badge-success">Followed</span>` : ''}
+                                        ${item.watchStatus?.is_archived ? `<span class="badge badge-danger">Archived</span>` : ''}
+                                        ${item.watchStatus?.is_for_later ? `<span class="badge badge-warning">For later</span>` : ''}
+                                        ${item.watchStatus?.is_up_to_date ? `<span class="badge badge-success">Up to date</span>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                `, 'lists-section'),
+                renderCards('User', userRows, row => `
+                    <h3 class="result-title">${escapeHtml(row.key)}</h3>
+                    <div class="result-meta">
+                        <span class="badge">${escapeHtml(formatValue(row.value))}</span>
+                    </div>
+                `, 'user-section')
+            ].join('');
+
+            resultsEl.innerHTML = `${navHtml}${sectionsHtml}`;
+        }
+
+        async function executeQuery(dbBuffer) {
+            log("Initializing SQLite engine...");
+            const SQL = await initSqlJs({
+                locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+            });
+
+            log("Opening database and executing query...");
+            const db = new SQL.Database(dbBuffer);
+
+            const query = "SELECT content FROM cache_dio;";
+
+            let result;
+            try {
+                result = db.exec(query);
+            } catch (sqlErr) {
+                throw new Error(`SQL Error: ${sqlErr.message}`);
+            }
+
+            if (result.length === 0) {
+                log("Query executed successfully, but returned 0 rows.");
+                return;
+            }
+
+            log(`Query successful. Found ${result[0].values.length} rows.`);
+            // renderTable(result[0].columns, result[0].values);
+
+            let shows = {};
+            let user = {};
+            let movies = {}
+            let towatch_movies = {};
+            let lists = {};
+
+            function insert_or_update_show(show) {
+                const id = show["id"];
+                if (!(id in shows) || ((show.watched_episode_count ?? 0) > (shows[id].watched_episode_count ?? 0)) || ((show.aired_episode_count ?? 0) > (shows[id].aired_episode_count ?? 0))) {
+                    // newer, insert or update
+                    shows[id] = shows[id] ?? {};
+                    shows[id]["id"] = show.id ?? shows[id]["id"];
+                    shows[id]["name"] = show.name ?? shows[id]["name"];
+                    shows[id]["poster"] = show.poster ?? shows[id]["poster"];
+                    shows[id]["watched_episode_count"] = show.watched_episode_count ?? shows[id]["watched_episode_count"];
+                    shows[id]["aired_episode_count"] = show.aired_episode_count ?? shows[id]["aired_episode_count"];
+                    shows[id]["status"] = show.status ?? shows[id]["status"];
+                    shows[id]["is_followed"] = show.is_followed ?? shows[id]["is_followed"];
+                    shows[id]["is_up_to_date"] = show.is_up_to_date ?? shows[id]["is_up_to_date"];
+                    shows[id]["is_archived"] = show.is_archived ?? shows[id]["is_archived"];
+                    shows[id]["is_for_later"] = show.is_for_later ?? shows[id]["is_for_later"];
+                    shows[id]["is_favorite"] = show.is_favorite ?? shows[id]["is_favorite"];
+
+                    for (let sorting of show.sorting ?? []) {
+                        if (sorting.id == "last_watched" && sorting.value != 0) {
+                            shows[id].last_watched = new Date(sorting.value * 1000);
+                        } else if (sorting.id == "last_added" && sorting.value != 0) {
+                            shows[id].last_added = new Date(sorting.value * 1000);
+                        }
+                    }
+                } else {
+                    // older, fill missing
+                    shows[id]["id"] = shows[id]["id"] ?? show.id;
+                    shows[id]["name"] = shows[id]["name"] ?? show.name;
+                    shows[id]["poster"] = shows[id]["poster"] ?? show.poster;
+                    shows[id]["watched_episode_count"] = shows[id]["watched_episode_count"] ?? show.watched_episode_count;
+                    shows[id]["aired_episode_count"] = shows[id]["aired_episode_count"] ?? show.aired_episode_count;
+                    shows[id]["status"] = shows[id]["status"] ?? show.status;
+                    shows[id]["is_followed"] = shows[id]["is_followed"] ?? show.is_followed;
+                    shows[id]["is_up_to_date"] = shows[id]["is_up_to_date"] ?? show.is_up_to_date;
+                    shows[id]["is_archived"] = shows[id]["is_archived"] ?? show.is_archived;
+                    shows[id]["is_for_later"] = shows[id]["is_for_later"] ?? show.is_for_later;
+                    shows[id]["is_favorite"] = shows[id]["is_favorite"] ?? show.is_favorite;
+
+                    for (let sorting of show.sorting ?? []) {
+                        if (sorting.id == "last_watched" && sorting.value != 0) {
+                            shows[id].last_watched = shows[id].last_watched ?? new Date(sorting.value * 1000);
+                        } else if (sorting.id == "last_added" && sorting.value != 0) {
+                            shows[id].last_added = shows[id].last_added ?? new Date(sorting.value * 1000);
+                        }
+                    }
+                }
+            }
+
+            function insert_or_update_movie(movie) {
+                const id = movie["uuid"];
+                movies[id] = movies[id] ?? {};
+                movies[id]["imdb_id"] = movie.meta?.imdb_id ?? movies[id]["imdb_id"];
+                movies[id]["name"] = movie.meta?.name ?? movies[id]["name"];
+                movies[id]["poster"] = movie.meta?.posters?.[0] ?? movies[id]["poster"];
+                movies[id]["watched_at"] = movie.watched_at ? new Date(movie.watched_at) : movies[id]["watched_at"];
+                movies[id]["added_at"] = movie.created_at ? new Date(movie.created_at) : movies[id]["added_at"];
+                movies[id]["rewatch_count"] = movie.rewatch_count ?? movies[id]["rewatch_count"];
+                movie.meta?.external_sources?.forEach((val) => {
+                    if (val.source == "tvdb") movies[id]["tvdb_id"] = movies[id]["tvdb_id"] ?? val.id;
+                })
+            }
+
+            function insert_or_update_towatch_movie(movie) {
+                const id = movie["uuid"];
+                towatch_movies[id] = towatch_movies[id] ?? {};
+                towatch_movies[id]["imdb_id"] = movie.meta?.imdb_id ?? towatch_movies[id]["imdb_id"];
+                towatch_movies[id]["name"] = movie.meta?.name ?? towatch_movies[id]["name"];
+                towatch_movies[id]["poster"] = movie.meta?.posters?.[0] ?? towatch_movies[id]["poster"];
+                towatch_movies[id]["watched_at"] = movie.watched_at ? new Date(movie.watched_at) : towatch_movies[id]["watched_at"];
+                towatch_movies[id]["added_at"] = movie.created_at ? new Date(movie.created_at) : towatch_movies[id]["added_at"];
+                movie.meta?.external_sources?.forEach((val) => {
+                    if (val.source == "tvdb") towatch_movies[id]["tvdb_id"] = towatch_movies[id]["tvdb_id"] ?? val.id;
+                })
+            }
+
+            function insert_or_update_list(list) {
+                const id = list["id"];
+                const updated_at = new Date(list["updated_at"]);
+                if (lists[id] === undefined || updated_at > lists[id]["updated_at"]) {
+                    lists[id] = list;
+                    // list contains name: string, posters: string[], created_at: string, objects: list of movies and series
+                }
+            }
+
+            for (const row of result[0].values) {
+                try {
+                    // console.log(row)
+                    const data = JSON.parse(displayVal = new TextDecoder().decode(row[0]))
+                    if ("follower_count" in data) {
+                        user["follower_count"] = data["follower_count"];
+                        user["name"] = data["name"];
+                        user["id"] = data["id"];
+                    } else if ("following_count" in data) {
+                        user["following_count"] = data["following_count"];
+                        user["name"] = data["name"];
+                        user["id"] = data["id"];
+                    } else if ("shows" in data) {
+                        for (const show of data["shows"]) {
+                            insert_or_update_show(show);
+                        }
+                    } else if ("status" in data) {
+                        if (data["status"] == "success") {
+                            if (data["data"] && data["data"].type == "list" && data["data"]["objects"] !== null) {
+                                if (!data["data"]["id"]) {
+                                    for (let entity of data["data"]["objects"]) {
+                                        if (entity["entity_type"] == "movie" && entity["type"] == "follow") {
+                                            if (entity["watched_at"]) {
+                                                insert_or_update_movie(entity);
+                                            } else {
+                                                insert_or_update_towatch_movie(entity)
+                                            }
+                                        } else if (entity["entity_type"] == "movie" && entity["type"] == "towatch") {
+                                            insert_or_update_towatch_movie(entity)
+                                        }
+                                    }
+                                } else {
+                                    insert_or_update_list(data["data"]);
+
+
+                                }
+                            } else if (data["data"] && data["data"].type == "watch") {
+                                for (let entity of data["data"]["objects"]) {
+                                    if (entity["entity_type"] == "movie" && entity["type"] == "watch") {
+                                        insert_or_update_movie(entity);
+                                    }
+                                }
+                            } else if (data["data"] && data["data"][0]?.type == "list") {
+                                for (let entity of data["data"]) {
+                                    if (entity["type"] == "list") {
+                                        insert_or_update_list(entity);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log(e, new TextDecoder().decode(row[0]))
+                    log(e)
+                    continue;
+                }
+            }
+            log("parsed all data")
+            console.log(shows);
+            console.log(movies);
+            console.log(towatch_movies);
+            console.log(lists);
+            console.log(user);
+            renderResults(shows, movies, towatch_movies, user, lists);
+        }
+
+    </script>
+</body>
+
+</html>
