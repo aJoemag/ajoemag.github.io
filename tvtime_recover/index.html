@@ -962,10 +962,6 @@
             try {
                 const rows = [];
                 for (let index = 0; index < shows.length; index += 1) {
-                    // testing
-                    if (rows.length > 100) {
-                        break;
-                    }
                     const show = shows[index];
                     const showName = show?.name || `Show ${index + 1}`;
                     downloadEpisodesCsvBtn.textContent = `Processing ${index + 1}/${totalShows}: ${showName}`;
