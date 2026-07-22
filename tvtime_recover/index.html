@@ -769,7 +769,7 @@
                     if (Date.now() - startedAt > totalMaxWaitMs) {
                         throw new Error('Trakt API rate limit exceeded and the total wait budget has been reached.');
                     }
-                    await sleep(waitSeconds * 1000);
+                    await sleep((waitSeconds+1) * 1000);
                     if (attempt >= 10) {
                         throw new Error('Trakt API rate limit exceeded after several retries.');
                     }
@@ -788,7 +788,7 @@
                         if (Date.now() - startedAt > totalMaxWaitMs) {
                             throw new Error('Trakt request retries exceeded the total wait budget.');
                         }
-                        await sleep(waitSeconds * 1000);
+                        await sleep((waitSeconds+1) * 1000);
                         return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
                     }
                     throw new Error(`Trakt API request failed with status ${response.status}${detail}`);
@@ -805,7 +805,7 @@
                     if (Date.now() - startedAt > totalMaxWaitMs) {
                         throw new Error('Trakt request retries exceeded the total wait budget.');
                     }
-                    await sleep(waitSeconds * 1000);
+                    await sleep((waitSeconds+1) * 1000);
                     return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
                 }
                 throw err;
