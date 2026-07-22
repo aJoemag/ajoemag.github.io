@@ -715,7 +715,7 @@
                 ...show,
                 name: show.name ?? 'Unknown show',
                 posterUrl: getPosterUrl(show.poster),
-                tvdbUrl: show.tvdb_id ? `https://www.thetvdb.com/series/${show.tvdb_id}` : (show.id ? `https://www.thetvdb.com/series/${show.id}` : ''),
+                tvdbUrl: show.tvdb_id ? `https://www.thetvdb.com/dereferrer/series/${show.tvdb_id}` : (show.id ? `https://www.thetvdb.com/dereferrer/series/${show.id}` : ''),
                 imdbUrl: show.imdb_id ? `https://www.imdb.com/title/${show.imdb_id}` : ''
             })));
 
@@ -725,7 +725,7 @@
                 name: movie.name ?? 'Unknown movie',
                 posterUrl: getPosterUrl(movie.poster),
                 imdbUrl: movie.imdb_id ? `https://www.imdb.com/title/${movie.imdb_id}` : '',
-                tvdbUrl: movie.tvdb_id ? `https://www.thetvdb.com/movies/${movie.tvdb_id}` : '',
+                tvdbUrl: movie.tvdb_id ? `https://www.thetvdb.com/dereferrer/movie/${movie.tvdb_id}` : '',
                 googleUrl: movie.name ? '' : `https://www.google.com/search?q=${encodeURIComponent(key)}`
             })));
 
@@ -735,7 +735,7 @@
                 name: movie.name ?? 'Unknown movie',
                 posterUrl: getPosterUrl(movie.poster),
                 imdbUrl: movie.imdb_id ? `https://www.imdb.com/title/${movie.imdb_id}` : '',
-                tvdbUrl: movie.tvdb_id ? `https://www.thetvdb.com/movies/${movie.tvdb_id}` : '',
+                tvdbUrl: movie.tvdb_id ? `https://www.thetvdb.com/dereferrer/movie/${movie.tvdb_id}` : '',
                 googleUrl: movie.name ? '' : `https://www.google.com/search?q=${encodeURIComponent(key)}`
             })));
 
