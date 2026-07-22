@@ -259,6 +259,40 @@
             font-size: 0.82rem;
         }
 
+        .episode-list {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 0.7rem;
+            display: grid;
+            gap: 0.55rem;
+        }
+
+        .episode-list-title {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .episode-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 0.6rem 0.7rem;
+            background: #fff;
+        }
+
+        .episode-item-title {
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            color: #111827;
+        }
+
+        .episode-item-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            font-size: 0.8rem;
+        }
+
         .warning {
             color: #a70000;
             font-weight: bold;
@@ -328,16 +362,24 @@
         </div>
 
         <div id="downloadBox"
-            style="display: none; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 0.75rem 0 0.5rem;">
-            <button id="downloadSeriesCsvBtn" type="button"
-                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
-                Trakt CSV (Series)</button>
-            <button id="downloadMoviesCsvBtn" type="button"
-                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
-                Trakt CSV (Movies)</button>
-            <button id="downloadTarBtn" type="button"
-                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #0f766e; color: white; cursor: pointer; font-weight: 600;">Download
-                Backup TAR</button>
+            style="display: none; flex-direction: column; align-items: flex-start; gap: 0.75rem; margin: 0.75rem 0 0.5rem;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+                <button id="downloadTarBtn" type="button"
+                    style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #0f766e; color: white; cursor: pointer; font-weight: 600;">Download
+                    Backup TAR</button>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+                <button id="downloadSeriesCsvBtn" type="button"
+                    style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
+                    Trakt CSV (Series)</button>
+                <button id="downloadMoviesCsvBtn" type="button"
+                    style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
+                    Trakt CSV (Movies)</button>
+                <button id="downloadEpisodesCsvBtn" type="button"
+                    style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #7c3aed; color: white; cursor: pointer; font-weight: 600;">Download
+                    Trakt CSV (Episodes)</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 0.92rem; font-weight: 600; border: 1px solid #fde68a;">⚠️ <span>The <strong>Episodes CSV</strong> export may take a few minutes to complete.</span></div>
             <div style="display: inline-block;">Importable into <a
                     href="https://app.trakt.tv/settings/data?source=trakt-csv&mode=media" target="_blank">Trakt</a>
             </div>
@@ -358,6 +400,7 @@
         const fileInputWrapper = document.getElementById('fileInputWrapper');
         const downloadSeriesCsvBtn = document.getElementById('downloadSeriesCsvBtn');
         const downloadMoviesCsvBtn = document.getElementById('downloadMoviesCsvBtn');
+        const downloadEpisodesCsvBtn = document.getElementById('downloadEpisodesCsvBtn');
         const downloadTarBtn = document.getElementById('downloadTarBtn');
         const downloadBox = document.getElementById('downloadBox');
         let exportData = null;
@@ -696,8 +739,247 @@
             downloadCsvFile(movies, 'movie', 'trakt-movies.csv');
         }
 
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function fetchTraktJson(url, onProgress, attempt = 1, startedAt = Date.now(), totalMaxWaitMs = 5 * 60 * 1000) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'readme/1.0',
+                        'accept': 'application/json',
+                        'trakt-api-key': 'sncgJnp5KW32NIxCYVypkXAhfwZgkfcfOeNy29iZr0I',
+                        'trakt-api-version': '2'
+                    }
+                });
+
+                if (response.status === 429) {
+                    const retryAfterHeader = response.headers.get('retry-after');
+                    const baseWaitSeconds = retryAfterHeader ? Number(retryAfterHeader) : 20;
+                    const waitSeconds = Math.min(baseWaitSeconds * attempt, 60);
+                    const message = `Rate limited by Trakt — waiting ${waitSeconds}s`;
+                    onProgress?.(message);
+                    log(message);
+                    if (Date.now() - startedAt + waitSeconds * 1000 > totalMaxWaitMs) {
+                        throw new Error('Trakt API rate limit exceeded and the total wait budget has been reached.');
+                    }
+                    await sleep(waitSeconds * 1000);
+                    if (attempt >= 5) {
+                        throw new Error('Trakt API rate limit exceeded after several retries.');
+                    }
+                    return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
+                }
+
+                if (!response.ok) {
+                    const text = await response.text().catch(() => '');
+                    const detail = text ? `: ${text}` : '';
+                    const retryable = response.status >= 500 || response.status === 403;
+                    if (retryable && attempt < 5) {
+                        const waitSeconds = Math.min(20 * attempt, 60);
+                        const message = `Trakt request failed with status ${response.status}${detail} — retrying in ${waitSeconds}s`;
+                        onProgress?.(message);
+                        log(message);
+                        if (Date.now() - startedAt + waitSeconds * 1000 > totalMaxWaitMs) {
+                            throw new Error('Trakt request retries exceeded the total wait budget.');
+                        }
+                        await sleep(waitSeconds * 1000);
+                        return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
+                    }
+                    throw new Error(`Trakt API request failed with status ${response.status}${detail}`);
+                }
+
+                return response.json();
+            } catch (err) {
+                const isNetworkFailure = err?.name === 'TypeError' || err?.message === 'Failed to fetch';
+                if (isNetworkFailure && attempt < 5) {
+                    const waitSeconds = Math.min(20 * attempt, 60);
+                    const message = `Trakt request failed (${err.message}) — retrying in ${waitSeconds}s`;
+                    onProgress?.(message);
+                    log(message);
+                    if (Date.now() - startedAt + waitSeconds * 1000 > totalMaxWaitMs) {
+                        throw new Error('Trakt request retries exceeded the total wait budget.');
+                    }
+                    await sleep(waitSeconds * 1000);
+                    return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
+                }
+                throw err;
+            }
+        }
+
+        async function buildEpisodeRowsForShow(show, onProgress) {
+            const watchedEpisodeCount = Number(show?.watched_episode_count ?? 0);
+            if (!watchedEpisodeCount) {
+                return [];
+            }
+
+            const localSeenEpisodes = Object.values(show?.episodes || {})
+                .filter(Boolean)
+                .filter(episode => episode?.seen === true)
+                .map(episode => ({
+                    ...episode,
+                    seasonNumber: Number(episode?.season_number ?? 0),
+                    episodeNumber: Number(episode?.number ?? 0)
+                }))
+                .sort((a, b) => {
+                    if (a.seasonNumber !== b.seasonNumber) return a.seasonNumber - b.seasonNumber;
+                    if (a.episodeNumber !== b.episodeNumber) return a.episodeNumber - b.episodeNumber;
+                    return String(a.name || '').localeCompare(String(b.name || ''));
+                });
+
+            const tvdbId = show?.tvdb_id ?? show?.id;
+            if (!tvdbId) {
+                return [];
+            }
+
+            try {
+                const showName = show?.name || 'show';
+                onProgress?.(`Looking up ${showName} on Trakt...`);
+                // log(`Episode export: looking up ${showName} on Trakt`);
+                const searchResults = await fetchTraktJson(`https://api.trakt.tv/search/tvdb/${encodeURIComponent(tvdbId)}`, onProgress);
+                const traktShowId = searchResults?.[0]?.show?.ids?.trakt;
+                if (!traktShowId) {
+                    return [];
+                }
+
+                const seasons = await fetchTraktJson(`https://api.trakt.tv/shows/${traktShowId}/seasons?extended=full`, onProgress);
+                const apiEpisodes = [];
+
+                for (const season of seasons || []) {
+                    const seasonNumber = season?.number;
+                    if (seasonNumber === undefined || seasonNumber === null) {
+                        continue;
+                    }
+
+                    const seasonEpisodes = await fetchTraktJson(`https://api.trakt.tv/shows/${traktShowId}/seasons/${seasonNumber}?extended=full`, onProgress);
+                    for (const episode of seasonEpisodes || []) {
+                        apiEpisodes.push({
+                            ...episode,
+                            season: Number(episode?.season ?? seasonNumber)
+                        });
+                    }
+                }
+
+                apiEpisodes.sort((a, b) => {
+                    if (Number(a?.season ?? 0) !== Number(b?.season ?? 0)) return Number(a?.season ?? 0) - Number(b?.season ?? 0);
+                    return Number(a?.number ?? 0) - Number(b?.number ?? 0);
+                });
+
+                const rows = [];
+                const usedKeys = new Set();
+
+                for (const localEpisode of localSeenEpisodes.slice(0, watchedEpisodeCount)) {
+                    const apiEpisode = apiEpisodes.find(candidate =>
+                        Number(candidate?.season ?? 0) === Number(localEpisode?.seasonNumber ?? 0) &&
+                        Number(candidate?.number ?? 0) === Number(localEpisode?.episodeNumber ?? 0)
+                    );
+
+                    const key = `${Number(localEpisode?.seasonNumber ?? 0)}-${Number(localEpisode?.episodeNumber ?? 0)}`;
+                    if (usedKeys.has(key)) {
+                        continue;
+                    }
+
+                    const estimatedWatchedAt = localEpisode?.seen_date
+                        ? toIsoDate(localEpisode.seen_date)
+                        : (show.last_watched
+                            ? toIsoDate(show.last_watched)
+                            : (apiEpisode?.first_aired ? toIsoDate(apiEpisode.first_aired) : ''));
+
+                    usedKeys.add(key);
+                    rows.push({
+                        trakt_id: apiEpisode?.ids?.trakt ?? '',
+                        watched_at: estimatedWatchedAt
+                    });
+                }
+
+                if (rows.length < watchedEpisodeCount) {
+                    for (const apiEpisode of apiEpisodes) {
+                        const key = `${Number(apiEpisode?.season ?? 0)}-${Number(apiEpisode?.number ?? 0)}`;
+                        if (usedKeys.has(key)) {
+                            continue;
+                        }
+
+                        rows.push({
+                            trakt_id: apiEpisode?.ids?.trakt ?? '',
+                            watched_at: ''
+                        });
+
+                        usedKeys.add(key);
+                        if (rows.length >= watchedEpisodeCount) {
+                            break;
+                        }
+                    }
+                }
+
+                return rows;
+            } catch (err) {
+                const message = `Episode export error for ${show?.name || show?.id}: ${err?.message || err}`;
+                console.warn(message, err);
+                log(message);
+                return [];
+            }
+        }
+
+        async function downloadEpisodesCsv() {
+            if (!exportData?.shows) {
+                return;
+            }
+
+            const shows = Object.values(exportData.shows || {});
+            const totalShows = shows.length;
+
+            log(`Episode export started for ${totalShows} show(s)`);
+            downloadEpisodesCsvBtn.disabled = true;
+            downloadEpisodesCsvBtn.textContent = 'Preparing episode export...';
+
+            try {
+                const rows = [];
+                for (let index = 0; index < shows.length; index += 1) {
+                    const show = shows[index];
+                    const showName = show?.name || `Show ${index + 1}`;
+                    downloadEpisodesCsvBtn.textContent = `Processing ${index + 1}/${totalShows}: ${showName}`;
+                    rows.push(...await buildEpisodeRowsForShow(show, (message) => {
+                        downloadEpisodesCsvBtn.textContent = `${message} (${index + 1}/${totalShows})`;
+                    }));
+                }
+
+                if (rows.length === 0) {
+                    log('Episode export finished with no rows exported');
+                    alert('No episode watch data could be exported.');
+                    return;
+                }
+
+                log(`Episode export succeeded: ${rows.length} episode row(s) prepared`);
+
+                const csvLines = ['trakt_id,type,watched_at'];
+                for (const row of rows) {
+                    csvLines.push(`${escapeCsv(row.trakt_id || '')},${escapeCsv('episode')},${escapeCsv(row.watched_at || '')}`);
+                }
+
+                const csv = csvLines.join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'trakt-episodes.csv';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                const message = `Episode export failed: ${err?.message || err}`;
+                log(message);
+                console.error(message, err);
+                alert(message);
+            } finally {
+                downloadEpisodesCsvBtn.disabled = false;
+                downloadEpisodesCsvBtn.textContent = 'Download Trakt CSV (Episodes)';
+            }
+        }
+
         downloadSeriesCsvBtn.addEventListener('click', downloadSeriesCsv);
         downloadMoviesCsvBtn.addEventListener('click', downloadMoviesCsv);
+        downloadEpisodesCsvBtn.addEventListener('click', downloadEpisodesCsv);
 
         function renderCards(title, items, cardRenderer, sectionId) {
             if (!items || items.length === 0) {
@@ -731,12 +1013,51 @@
             return [...items].sort((a, b) => getLastWatchedValue(b) - getLastWatchedValue(a));
         }
 
+        function renderEpisodeList(show) {
+            const episodes = show?.episodes;
+            if (!episodes || typeof episodes !== 'object' || Object.keys(episodes).length === 0) {
+                return '';
+            }
+
+            const episodeRows = Object.values(episodes)
+                .filter(Boolean)
+                .filter(episode => episode?.seen === true)
+                .map(episode => ({
+                    ...episode,
+                    seasonNumber: Number(episode?.season_number ?? 0),
+                    episodeNumber: Number(episode?.number ?? 0),
+                    title: episode?.name || `S${episode?.season_number ?? '?'}E${episode?.number ?? '?'}`
+                }))
+                .sort((a, b) => {
+                    if (a.seasonNumber !== b.seasonNumber) return a.seasonNumber - b.seasonNumber;
+                    if (a.episodeNumber !== b.episodeNumber) return a.episodeNumber - b.episodeNumber;
+                    return String(a.title).localeCompare(String(b.title));
+                });
+
+            return `
+                <div class="episode-list">
+                    <h4 class="episode-list-title">Episodes</h4>
+                    ${episodeRows.map(episode => `
+                        <div class="episode-item">
+                            <div class="episode-item-title">${escapeHtml(episode.title)}</div>
+                            <div class="episode-item-meta">
+                                ${episode.seen_date ? `<span class="badge">Seen ${escapeHtml(formatValue(episode.seen_date))}</span>` : ''}
+                                ${episode.nb_times_watched !== undefined ? `<span class="badge">Watched ${escapeHtml(formatValue(episode.nb_times_watched))}x</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
         function renderResults(shows, movies, towatchMovies, user, lists) {
             exportData = { shows, movies, towatchMovies };
             const hasSeries = shows && Object.keys(shows).length > 0;
             const hasMovies = (movies && Object.keys(movies).length > 0) || (towatchMovies && Object.keys(towatchMovies).length > 0);
+            const hasEpisodeExports = Object.values(shows || {}).some(show => Number(show?.watched_episode_count ?? 0) > 0);
             downloadSeriesCsvBtn.style.display = hasSeries ? 'inline-block' : 'none';
             downloadMoviesCsvBtn.style.display = hasMovies ? 'inline-block' : 'none';
+            downloadEpisodesCsvBtn.style.display = hasEpisodeExports ? 'inline-block' : 'none';
             downloadBox.style.display = (hasSeries || hasMovies) ? 'flex' : 'none';
 
             const showRows = sortByLastWatched(Object.values(shows || {}).map(show => ({
@@ -820,6 +1141,7 @@
                         ${show.tvdbUrl ? createLink(show.tvdbUrl, 'TVDB') : ''}
                         ${show.imdbUrl ? createLink(show.imdbUrl, 'IMDb') : ''}
                     </div>
+                    ${renderEpisodeList(show)}
                 `, 'shows-section'),
                 renderCards('Movies', movieRows, movie => `
                     <div class="result-card-top">
@@ -1013,6 +1335,18 @@
                 }
             }
 
+            function insert_or_update_episode(episode) {
+                const ep_id = episode["id"];
+                const show_id = episode["show"]["id"]
+                const seen_date = new Date(episode["seen_date"]);
+                shows[show_id] = shows[show_id] ?? {};
+                shows[show_id].episodes = shows[show_id].episodes ?? {};
+                shows[show_id].episodes[ep_id] = episode;
+                shows[show_id].episodes[ep_id].seen_date = seen_date
+                // contains name, number, season_number, seen_date, nb_times_watched, seen
+
+            }
+
             for (const row of result[0].values) {
                 try {
                     // console.log(row)
@@ -1063,6 +1397,10 @@
                                 }
                             }
                         }
+                    } else if (data[0]?.show?.id) {
+                        data.forEach(episode => {
+                            insert_or_update_episode(episode);
+                        });
                     }
                 } catch (e) {
                     console.log(e, new TextDecoder().decode(row[0]))
