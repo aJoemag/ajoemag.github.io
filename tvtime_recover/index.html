@@ -756,7 +756,7 @@
                 if (response.status === 429) {
                     const retryAfterHeader = response.headers.get('retry-after');
                     const baseWaitSeconds = retryAfterHeader ? Number(retryAfterHeader) : 20;
-                    const waitSeconds = Math.min(baseWaitSeconds * attempt, 60);
+                    const waitSeconds = Math.min(baseWaitSeconds * attempt, 120);
                     const message = `Rate limited by Trakt — waiting ${waitSeconds}s`;
                     onProgress?.(message);
                     log(message);
@@ -764,7 +764,7 @@
                         throw new Error('Trakt API rate limit exceeded and the total wait budget has been reached.');
                     }
                     await sleep(waitSeconds * 1000);
-                    if (attempt >= 5) {
+                    if (attempt >= 10) {
                         throw new Error('Trakt API rate limit exceeded after several retries.');
                     }
                     return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
@@ -774,8 +774,8 @@
                     const text = await response.text().catch(() => '');
                     const detail = text ? `: ${text}` : '';
                     const retryable = response.status >= 500 || response.status === 403;
-                    if (retryable && attempt < 5) {
-                        const waitSeconds = Math.min(20 * attempt, 60);
+                    if (retryable && attempt < 10) {
+                        const waitSeconds = Math.min(20 * attempt, 120);
                         const message = `Trakt request failed with status ${response.status}${detail} — retrying in ${waitSeconds}s`;
                         onProgress?.(message);
                         log(message);
@@ -791,8 +791,8 @@
                 return response.json();
             } catch (err) {
                 const isNetworkFailure = err?.name === 'TypeError' || err?.message === 'Failed to fetch';
-                if (isNetworkFailure && attempt < 5) {
-                    const waitSeconds = Math.min(20 * attempt, 60);
+                if (isNetworkFailure && attempt < 10) {
+                    const waitSeconds = Math.min(20 * attempt, 120);
                     const message = `Trakt request failed (${err.message}) — retrying in ${waitSeconds}s`;
                     onProgress?.(message);
                     log(message);
