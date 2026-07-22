@@ -382,9 +382,13 @@
             <div style="display: inline-block;">Importable into <a
                     href="https://app.trakt.tv/settings/data?source=trakt-csv&mode=media" target="_blank">Trakt</a>
             </div>
-            <div style="display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 0.92rem; font-weight: 600; border: 1px solid #fde68a;">⚠️ <span>The <strong>Episodes CSV</strong> export may take a few minutes to complete.</span></div>
-            <div class="warning" style="display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef2f2; color: #b91c1c; font-size: 0.92rem; font-weight: 600; border: 1px solid #fecaca; line-height: 1.4;">
-                ⚠️ <span>Warning: this exports are best-effort only and may be incomplete or inaccurate. Review the CSV before importing it into Trakt.</span>
+            <div
+                style="display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 0.92rem; font-weight: 600; border: 1px solid #fde68a;">
+                ⚠️ <span>The <strong>Episodes CSV</strong> export may take a few minutes to complete.</span></div>
+            <div class="warning"
+                style="display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef2f2; color: #b91c1c; font-size: 0.92rem; font-weight: 600; border: 1px solid #fecaca; line-height: 1.4;">
+                ⚠️ <span>Warning: this exports are best-effort only and may be incomplete or inaccurate. Review the CSV
+                    before importing it into Trakt.</span>
             </div>
         </div>
 
@@ -404,6 +408,8 @@
         const downloadBox = document.getElementById('downloadBox');
         let exportData = null;
         let extractedTarBuffer = null;
+        let cachedEpisodeRows = null;
+        let cachedEpisodeCsv = null;
 
         function log(msg) {
             statusEl.textContent += msg + '\n';
@@ -755,12 +761,12 @@
 
                 if (response.status === 429) {
                     const retryAfterHeader = response.headers.get('retry-after');
-                    const baseWaitSeconds = retryAfterHeader ? Number(retryAfterHeader) : 20;
-                    const waitSeconds = Math.min(baseWaitSeconds * attempt, 120);
+                    const baseWaitSeconds = retryAfterHeader ? Number(retryAfterHeader) : 300;
+                    const waitSeconds = baseWaitSeconds;
                     const message = `Rate limited by Trakt — waiting ${waitSeconds}s`;
                     onProgress?.(message);
                     log(message);
-                    if (Date.now() - startedAt + waitSeconds * 1000 > totalMaxWaitMs) {
+                    if (Date.now() - startedAt > totalMaxWaitMs) {
                         throw new Error('Trakt API rate limit exceeded and the total wait budget has been reached.');
                     }
                     await sleep(waitSeconds * 1000);
@@ -775,11 +781,11 @@
                     const detail = text ? `: ${text}` : '';
                     const retryable = response.status >= 500 || response.status === 403;
                     if (retryable && attempt < 10) {
-                        const waitSeconds = Math.min(20 * attempt, 120);
+                        const waitSeconds = 300;
                         const message = `Trakt request failed with status ${response.status}${detail} — retrying in ${waitSeconds}s`;
                         onProgress?.(message);
                         log(message);
-                        if (Date.now() - startedAt + waitSeconds * 1000 > totalMaxWaitMs) {
+                        if (Date.now() - startedAt > totalMaxWaitMs) {
                             throw new Error('Trakt request retries exceeded the total wait budget.');
                         }
                         await sleep(waitSeconds * 1000);
@@ -792,11 +798,11 @@
             } catch (err) {
                 const isNetworkFailure = err?.name === 'TypeError' || err?.message === 'Failed to fetch';
                 if (isNetworkFailure && attempt < 10) {
-                    const waitSeconds = Math.min(20 * attempt, 120);
+                    const waitSeconds = 300;
                     const message = `Trakt request failed (${err.message}) — retrying in ${waitSeconds}s`;
                     onProgress?.(message);
                     log(message);
-                    if (Date.now() - startedAt + waitSeconds * 1000 > totalMaxWaitMs) {
+                    if (Date.now() - startedAt > totalMaxWaitMs) {
                         throw new Error('Trakt request retries exceeded the total wait budget.');
                     }
                     await sleep(waitSeconds * 1000);
@@ -804,6 +810,19 @@
                 }
                 throw err;
             }
+        }
+
+        function estimateEpisodeWatchedAt(localEpisode, show, apiEpisode) {
+            if (localEpisode?.seen_date) {
+                return toIsoDate(localEpisode.seen_date);
+            }
+            if (show?.last_watched) {
+                return toIsoDate(show.last_watched);
+            }
+            if (apiEpisode?.first_aired) {
+                return toIsoDate(apiEpisode.first_aired);
+            }
+            return '';
         }
 
         async function buildEpisodeRowsForShow(show, onProgress) {
@@ -878,12 +897,7 @@
                         continue;
                     }
 
-                    const estimatedWatchedAt = localEpisode?.seen_date
-                        ? toIsoDate(localEpisode.seen_date)
-                        : (show.last_watched
-                            ? toIsoDate(show.last_watched)
-                            : (apiEpisode?.first_aired ? toIsoDate(apiEpisode.first_aired) : ''));
-
+                    const estimatedWatchedAt = estimateEpisodeWatchedAt(localEpisode, show, apiEpisode);
                     usedKeys.add(key);
                     rows.push({
                         trakt_id: apiEpisode?.ids?.trakt ?? '',
@@ -900,7 +914,7 @@
 
                         rows.push({
                             trakt_id: apiEpisode?.ids?.trakt ?? '',
-                            watched_at: ''
+                            watched_at: estimateEpisodeWatchedAt(null, show, apiEpisode)
                         });
 
                         usedKeys.add(key);
@@ -924,6 +938,20 @@
                 return;
             }
 
+            if (cachedEpisodeCsv) {
+                log('Episode export using cached CSV data');
+                const blob = new Blob([cachedEpisodeCsv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'trakt-episodes.csv';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                return;
+            }
+
             const shows = Object.values(exportData.shows || {});
             const totalShows = shows.length;
 
@@ -934,6 +962,10 @@
             try {
                 const rows = [];
                 for (let index = 0; index < shows.length; index += 1) {
+                    // testing
+                    if (rows.length > 100) {
+                        break;
+                    }
                     const show = shows[index];
                     const showName = show?.name || `Show ${index + 1}`;
                     downloadEpisodesCsvBtn.textContent = `Processing ${index + 1}/${totalShows}: ${showName}`;
@@ -948,6 +980,7 @@
                     return;
                 }
 
+                cachedEpisodeRows = rows;
                 log(`Episode export succeeded: ${rows.length} episode row(s) prepared`);
 
                 const csvLines = ['trakt_id,type,watched_at'];
@@ -955,8 +988,8 @@
                     csvLines.push(`${escapeCsv(row.trakt_id || '')},${escapeCsv('episode')},${escapeCsv(row.watched_at || '')}`);
                 }
 
-                const csv = csvLines.join('\n');
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                cachedEpisodeCsv = csvLines.join('\n');
+                const blob = new Blob([cachedEpisodeCsv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
@@ -1051,6 +1084,8 @@
 
         function renderResults(shows, movies, towatchMovies, user, lists) {
             exportData = { shows, movies, towatchMovies };
+            cachedEpisodeRows = null;
+            cachedEpisodeCsv = null;
             const hasSeries = shows && Object.keys(shows).length > 0;
             const hasMovies = (movies && Object.keys(movies).length > 0) || (towatchMovies && Object.keys(towatchMovies).length > 0);
             const hasEpisodeExports = Object.values(shows || {}).some(show => Number(show?.watched_episode_count ?? 0) > 0);
