@@ -742,7 +742,7 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        async function fetchTraktJson(url, onProgress, attempt = 1, startedAt = Date.now(), totalMaxWaitMs = 5 * 60 * 1000) {
+        async function fetchTraktJson(url, onProgress, attempt = 1, startedAt = Date.now(), totalMaxWaitMs = 10 * 60 * 1000) {
             try {
                 const response = await fetch(url, {
                     headers: {
