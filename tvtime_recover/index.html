@@ -335,6 +335,9 @@
             <button id="downloadMoviesCsvBtn" type="button"
                 style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
                 Trakt CSV (Movies)</button>
+            <button id="downloadTarBtn" type="button"
+                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #0f766e; color: white; cursor: pointer; font-weight: 600;">Download
+                Backup TAR</button>
             <div style="display: inline-block;">Importable into <a
                     href="https://app.trakt.tv/settings/data?source=trakt-csv&mode=media" target="_blank">Trakt</a>
             </div>
@@ -355,8 +358,10 @@
         const fileInputWrapper = document.getElementById('fileInputWrapper');
         const downloadSeriesCsvBtn = document.getElementById('downloadSeriesCsvBtn');
         const downloadMoviesCsvBtn = document.getElementById('downloadMoviesCsvBtn');
+        const downloadTarBtn = document.getElementById('downloadTarBtn');
         const downloadBox = document.getElementById('downloadBox');
         let exportData = null;
+        let extractedTarBuffer = null;
 
         function log(msg) {
             statusEl.textContent += msg + '\n';
@@ -463,6 +468,25 @@
         });
 
         // Updated extraction logic to handle a dynamic start offset
+        function downloadExtractedTar() {
+            if (!extractedTarBuffer) {
+                alert('No extracted backup archive is available to download.');
+                return;
+            }
+
+            const blob = new Blob([extractedTarBuffer], { type: 'application/x-tar' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'tvtime-backup.tar';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        downloadTarBtn.addEventListener('click', downloadExtractedTar);
+
         function extractFromBackup(uint8View, startOffset) {
             let offset = startOffset;
 
@@ -492,6 +516,10 @@
                 log("Decompressing ZLIB payload (this may take a moment)...");
                 payload = pako.inflate(payload);
             }
+
+            extractedTarBuffer = payload;
+            downloadTarBtn.style.display = 'inline-block';
+            downloadBox.style.display = 'flex';
 
             log(`Extracted TAR size: ${payload.length} bytes. Searching for DioCache.db...`);
 
