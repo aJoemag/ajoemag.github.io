@@ -1434,7 +1434,7 @@
                         user["id"] = data["id"];
                     } else if ("shows" in data) {
                         for (const show of data["shows"]) {
-                            // insert_or_update_show(show);
+                            insert_or_update_show(show);
                         }
                     } else if ("status" in data) {
                         if (data["status"] == "success") {
