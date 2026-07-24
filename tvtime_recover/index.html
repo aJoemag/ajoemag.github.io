@@ -1172,15 +1172,15 @@
                             <h3 class="result-title">${escapeHtml(show.name)}</h3>
                             <div class="result-meta">
                                 ${showWatchStatusBadge(show)}
-                                ${show.status ? `<span class="badge">${escapeHtml(show.status)}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="result-meta">
-                        ${show.last_watched ? `<span class="badge">Last watched ${escapeHtml(formatValue(show.last_watched))}</span>` : ''}
+                                ${show.is_up_to_date ? `<span class="badge badge-success">Up to date</span>` : ''}
+                                ${show.last_watched ? `<span class="badge">Last watched ${escapeHtml(formatValue(show.last_watched))}</span>` : ''}
+                                </div>
+                                </div>
+                                </div>
+                                <div class="result-meta">
+                        ${show.status ? `<span class="badge">${escapeHtml(show.status)}</span>` : ''}
                         ${show.last_added ? `<span class="badge">Added ${escapeHtml(formatValue(show.last_added))}</span>` : ''}
                         ${show.is_followed ? `<span class="badge">Followed</span>` : ''}
-                        ${show.is_up_to_date ? `<span class="badge">Up to date</span>` : ''}
                         ${show.is_archived ? `<span class="badge badge-danger">Archived</span>` : ''}
                         ${show.is_favorite ? `<span class="badge badge-success">Favorite</span>` : ''}
                         ${show.is_for_later ? `<span class="badge badge-warning">Watch later</span>` : ''}
@@ -1436,14 +1436,26 @@
             function insert_or_update_episode(episode) {
                 const ep_id = episode["id"];
                 const show_id = episode["show"]["id"]
-                const seen_date = new Date(episode["seen_date"]);
+                const seen_date = episode["seen_date"] ? new Date(episode["seen_date"]) : undefined;
                 shows[show_id] = shows[show_id] ?? {};
                 shows[show_id].id = shows[show_id].id ?? show_id;
                 shows[show_id].episodes = shows[show_id].episodes ?? {};
                 shows[show_id].episodes[ep_id] = episode;
                 shows[show_id].episodes[ep_id].seen_date = seen_date
                 // contains name, number, season_number, seen_date, nb_times_watched, seen
-
+                if (shows[show_id].watched_episode_count === undefined) {
+                    shows[show_id].watched_episode_count = episode.show?.seen_episodes;
+                } else if (episode.show?.seen_episodes !== undefined) {
+                    shows[show_id].watched_episode_count = Math.max(shows[show_id].watched_episode_count, episode.show?.seen_episodes);
+                }
+                if (shows[show_id].aired_episode_count === undefined) {
+                    shows[show_id].aired_episode_count = episode.show?.aired_episodes;
+                } else if (episode.show?.aired_episodes !== undefined) {
+                    shows[show_id].aired_episode_count = Math.max(shows[show_id].aired_episode_count, episode.show?.aired_episodes);
+                }
+                shows[show_id].name = shows[show_id].name ?? episode.show?.name;
+                shows[show_id].poster = shows[show_id].poster ?? (episode.show?.all_images?.poster?.[0] ? { url: episode.show?.all_images?.poster?.[0] } : undefined);
+                shows[show_id].status = shows[show_id].status ?? (episode.show?.is_ended ? "Ended" : "Continuing");
             }
 
             for (const row of result[0].values) {
