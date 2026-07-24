@@ -384,7 +384,8 @@
             </div>
             <div
                 style="display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 0.92rem; font-weight: 600; border: 1px solid #fde68a;">
-                ⚠️ <span>The <strong>Episodes CSV</strong> export may take a few minutes to complete as it will fetch episode information from Trakt.</span></div>
+                ⚠️ <span>The <strong>Episodes CSV</strong> export may take a few minutes to complete as it will fetch
+                    episode information from Trakt.</span></div>
             <div class="warning"
                 style="display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef2f2; color: #b91c1c; font-size: 0.92rem; font-weight: 600; border: 1px solid #fecaca; line-height: 1.4;">
                 ⚠️ <span>Warning: this exports are best-effort only and may be incomplete or inaccurate.</span>
@@ -768,7 +769,7 @@
                     if (Date.now() - startedAt > totalMaxWaitMs) {
                         throw new Error('Trakt API rate limit exceeded and the total wait budget has been reached.');
                     }
-                    await sleep((waitSeconds+1) * 1000);
+                    await sleep((waitSeconds + 1) * 1000);
                     if (attempt >= 10) {
                         throw new Error('Trakt API rate limit exceeded after several retries.');
                     }
@@ -787,7 +788,7 @@
                         if (Date.now() - startedAt > totalMaxWaitMs) {
                             throw new Error('Trakt request retries exceeded the total wait budget.');
                         }
-                        await sleep((waitSeconds+1) * 1000);
+                        await sleep((waitSeconds + 1) * 1000);
                         return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
                     }
                     throw new Error(`Trakt API request failed with status ${response.status}${detail}`);
@@ -804,7 +805,7 @@
                     if (Date.now() - startedAt > totalMaxWaitMs) {
                         throw new Error('Trakt request retries exceeded the total wait budget.');
                     }
-                    await sleep((waitSeconds+1) * 1000);
+                    await sleep((waitSeconds + 1) * 1000);
                     return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
                 }
                 throw err;
@@ -1063,10 +1064,10 @@
 
             return `
                 <div class="episode-list">
-                    <h4 class="episode-list-title">Episodes</h4>
+                    <h4 class="episode-list-title">Watched Episodes</h4>
                     ${episodeRows.map(episode => `
                         <div class="episode-item">
-                            <div class="episode-item-title">${escapeHtml(episode.title)}</div>
+                            <div class="episode-item-title">S${episode.season_number ?? '?'}E${episode.number ?? '?'} ${escapeHtml(episode.title)}</div>
                             <div class="episode-item-meta">
                                 ${episode.seen_date ? `<span class="badge">Seen ${escapeHtml(formatValue(episode.seen_date))}</span>` : ''}
                                 ${episode.nb_times_watched !== undefined ? `<span class="badge">Watched ${escapeHtml(formatValue(episode.nb_times_watched))}x</span>` : ''}
@@ -1146,6 +1147,17 @@
                 </nav>
             `;
 
+            const showWatchStatusBadge = (show) => {
+                const watchedEpisodeCount = Number(show?.watched_episode_count ?? 0);
+                const hasLastWatched = Boolean(show?.last_watched);
+
+                if (watchedEpisodeCount > 0 || hasLastWatched) {
+                    return `<span class="badge">Watched ${formatValue(watchedEpisodeCount ?? '—', '—')}/${formatValue(show.aired_episode_count ?? '—', '—')} episodes</span>`;
+                }
+
+                return '<span class="badge">Not yet watched</span>';
+            };
+
             const sectionsHtml = [
                 renderCards('Shows', showRows, show => `
                     <div class="result-card-top">
@@ -1153,7 +1165,7 @@
                         <div>
                             <h3 class="result-title">${escapeHtml(show.name)}</h3>
                             <div class="result-meta">
-                                <span class="badge">Watched ${formatValue(show.watched_episode_count ?? '—', '—')}/${formatValue(show.aired_episode_count ?? '—', '—')} episodes</span>
+                                ${showWatchStatusBadge(show)}
                                 ${show.status ? `<span class="badge">${escapeHtml(show.status)}</span>` : ''}
                             </div>
                         </div>
@@ -1165,6 +1177,7 @@
                         ${show.is_up_to_date ? `<span class="badge">Up to date</span>` : ''}
                         ${show.is_archived ? `<span class="badge badge-danger">Archived</span>` : ''}
                         ${show.is_favorite ? `<span class="badge badge-success">Favorite</span>` : ''}
+                        ${show.is_for_later ? `<span class="badge badge-warning">Watch later</span>` : ''}
                     </div>
                     <div class="result-links">
                         ${show.tvdbUrl ? createLink(show.tvdbUrl, 'TVDB') : ''}
@@ -1229,7 +1242,7 @@
                                         ${item.watchStatus?.watched_episode_count !== undefined ? `<span class="badge">Watched ${escapeHtml(formatValue(item.watchStatus.watched_episode_count))}/${escapeHtml(formatValue(item.watchStatus.aired_episode_count ?? '—'))}</span>` : ''}
                                         ${item.watchStatus?.is_followed ? `<span class="badge badge-success">Followed</span>` : ''}
                                         ${item.watchStatus?.is_archived ? `<span class="badge badge-danger">Archived</span>` : ''}
-                                        ${item.watchStatus?.is_for_later ? `<span class="badge badge-warning">For later</span>` : ''}
+                                        ${item.watchStatus?.is_for_later ? `<span class="badge badge-warning">Watch later</span>` : ''}
                                         ${item.watchStatus?.is_up_to_date ? `<span class="badge badge-success">Up to date</span>` : ''}
                                     </div>
                                 </div>
@@ -1328,6 +1341,32 @@
                 }
             }
 
+            function insert_or_update_show_from_list(show) {
+                const id = show.meta?.id;
+                if (!id) return;
+                shows[id] = shows[id] ?? {};
+                shows[id]["id"] = shows[id]["id"] ?? show.meta?.id;
+                shows[id]["name"] = shows[id]["name"] ?? show.meta?.name;
+                shows[id]["poster"] = shows[id]["poster"] ?? show.meta?.images[0];
+                // shows[id]["watched_episode_count"] = shows[id]["watched_episode_count"] ?? show.watched_episode_count;
+                // shows[id]["aired_episode_count"] = shows[id]["aired_episode_count"] ?? show.aired_episode_count;
+                // shows[id]["status"] = shows[id]["status"] ?? show.status;
+                shows[id]["is_followed"] = shows[id]["is_followed"] ?? (show.type == "follow");
+                shows[id]["is_up_to_date"] = shows[id]["is_up_to_date"] ?? show.filter.includes('up_to_date');
+                shows[id]["is_archived"] = shows[id]["is_archived"] ?? show.filter.includes('stopped');
+                shows[id]["is_for_later"] = shows[id]["is_for_later"] ?? show.filter.includes('watch_later');
+                shows[id]["is_favorite"] = shows[id]["is_favorite"] ?? show.is_favorite;
+
+                for (let sorting of show.sorting ?? []) {
+                    if (sorting.id == "watch_date" && sorting.value != 0) {
+                        shows[id].last_watched = shows[id].last_watched ?? new Date(sorting.value * 1000);
+                    } else if (sorting.id == "follow_date" && sorting.value != 0) {
+                        shows[id].last_added = shows[id].last_added ?? new Date(sorting.value * 1000);
+                    }
+                }
+
+            }
+
             function insert_or_update_movie(movie) {
                 const id = movie["uuid"];
                 movies[id] = movies[id] ?? {};
@@ -1369,6 +1408,7 @@
                 const show_id = episode["show"]["id"]
                 const seen_date = new Date(episode["seen_date"]);
                 shows[show_id] = shows[show_id] ?? {};
+                shows[show_id].id = shows[show_id].id ?? show_id;
                 shows[show_id].episodes = shows[show_id].episodes ?? {};
                 shows[show_id].episodes[ep_id] = episode;
                 shows[show_id].episodes[ep_id].seen_date = seen_date
@@ -1405,6 +1445,8 @@
                                             }
                                         } else if (entity["entity_type"] == "movie" && entity["type"] == "towatch") {
                                             insert_or_update_towatch_movie(entity)
+                                        } else if (entity["entity_type"] == "series" && entity["type"] == "follow") {
+                                            insert_or_update_show_from_list(entity)
                                         }
                                     }
                                 } else {
