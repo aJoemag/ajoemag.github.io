@@ -1408,6 +1408,28 @@
                 if (lists[id] === undefined || updated_at > lists[id]["updated_at"]) {
                     lists[id] = list;
                     // list contains name: string, posters: string[], created_at: string, objects: list of movies and series
+
+                    list.objects?.forEach(element => {
+                        if (element.type == "series") {
+                            if (element.watch_status?.is_followed) {
+                                const id = element.id;
+                                const show = element;
+                                if (!id) return;
+                                shows[id] = shows[id] ?? {};
+                                shows[id]["id"] = shows[id]["id"] ?? show.id;
+                                shows[id]["name"] = shows[id]["name"] ?? show.name;
+                                shows[id]["poster"] = shows[id]["poster"] ?? show.poster;
+                                shows[id]["watched_episode_count"] = shows[id]["watched_episode_count"] ?? show.watch_status?.watched_episode_count;
+                                shows[id]["aired_episode_count"] = shows[id]["aired_episode_count"] ?? show.watch_status?.aired_episode_count;
+                                shows[id]["status"] = shows[id]["status"] ?? show.status;
+                                shows[id]["is_followed"] = shows[id]["is_followed"] ?? show.watch_status?.is_followed;
+                                shows[id]["is_up_to_date"] = shows[id]["is_up_to_date"] ?? show.watch_status?.is_up_to_date;
+                                shows[id]["is_archived"] = shows[id]["is_archived"] ?? show.watch_status?.is_archived;
+                                shows[id]["is_for_later"] = shows[id]["is_for_later"] ?? show.watch_status?.is_for_later;
+                                shows[id]["is_favorite"] = shows[id]["is_favorite"] ?? show.watch_status?.is_favorite;
+                            }
+                        }
+                    });
                 }
             }
 
