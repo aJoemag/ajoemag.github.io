@@ -1049,7 +1049,7 @@
 
             const episodeRows = Object.values(episodes)
                 .filter(Boolean)
-                .filter(episode => episode?.seen === true)
+                .filter(episode => episode?.seen === true || episode.nb_times_watched > 0)
                 .map(episode => ({
                     ...episode,
                     seasonNumber: Number(episode?.season_number ?? 0),
@@ -1061,7 +1061,9 @@
                     if (a.episodeNumber !== b.episodeNumber) return a.episodeNumber - b.episodeNumber;
                     return String(a.title).localeCompare(String(b.title));
                 });
-
+            if (Object.keys(episodeRows).length === 0) {
+                return '';
+            }
             return `
                 <div class="episode-list">
                     <h4 class="episode-list-title">Watched Episodes</h4>
