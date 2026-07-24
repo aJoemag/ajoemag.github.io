@@ -1150,11 +1150,11 @@
             `;
 
             const showWatchStatusBadge = (show) => {
-                const watchedEpisodeCount = Number(show?.watched_episode_count ?? 0);
+                const watchedEpisodeCount = show?.watched_episode_count;
                 const hasLastWatched = Boolean(show?.last_watched);
 
                 if (watchedEpisodeCount > 0 || hasLastWatched) {
-                    return `<span class="badge">Watched ${formatValue(watchedEpisodeCount ?? '—', '—')}/${formatValue(show.aired_episode_count ?? '—', '—')} episodes</span>`;
+                    return `<span class="badge">Watched ${formatValue(watchedEpisodeCount ?? '?', '?')}/${formatValue(show.aired_episode_count ?? '?', '?')} episodes</span>`;
                 }
 
                 return '<span class="badge">Not yet watched</span>';
