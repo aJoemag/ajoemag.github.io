@@ -1361,9 +1361,11 @@
 
                 for (let sorting of show.sorting ?? []) {
                     if (sorting.id == "watch_date" && sorting.value != 0) {
-                        shows[id].last_watched = shows[id].last_watched ?? new Date(sorting.value * 1000);
+                        if (sorting.value != "1970-01-01T00:00:00Z") {
+                            shows[id].last_watched = shows[id].last_watched ?? new Date(sorting.value);
+                        }
                     } else if (sorting.id == "follow_date" && sorting.value != 0) {
-                        shows[id].last_added = shows[id].last_added ?? new Date(sorting.value * 1000);
+                        shows[id].last_added = shows[id].last_added ?? new Date(sorting.value);
                     }
                 }
 
@@ -1432,7 +1434,7 @@
                         user["id"] = data["id"];
                     } else if ("shows" in data) {
                         for (const show of data["shows"]) {
-                            insert_or_update_show(show);
+                            // insert_or_update_show(show);
                         }
                     } else if ("status" in data) {
                         if (data["status"] == "success") {
