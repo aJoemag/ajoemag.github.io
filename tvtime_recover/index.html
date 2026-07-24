@@ -382,11 +382,11 @@
             <div style="display: inline-block;">Importable into <a
                     href="https://app.trakt.tv/settings/data?source=trakt-csv&mode=media" target="_blank">Trakt</a>
             </div>
-            <div
-                style="display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 0.92rem; font-weight: 600; border: 1px solid #fde68a;">
+            <div id="episodesWarning"
+                style="display: none; align-items: center; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 0.92rem; font-weight: 600; border: 1px solid #fde68a;">
                 ⚠️ <span>The <strong>Episodes CSV</strong> export may take a few minutes to complete as it will fetch
                     episode information from Trakt.</span></div>
-            <div class="warning"
+            <div id="exportWarning" class="warning"
                 style="display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef2f2; color: #b91c1c; font-size: 0.92rem; font-weight: 600; border: 1px solid #fecaca; line-height: 1.4;">
                 ⚠️ <span>Warning: this exports are best-effort only and may be incomplete or inaccurate.</span>
             </div>
@@ -406,6 +406,8 @@
         const downloadEpisodesCsvBtn = document.getElementById('downloadEpisodesCsvBtn');
         const downloadTarBtn = document.getElementById('downloadTarBtn');
         const downloadBox = document.getElementById('downloadBox');
+        const episodesWarning = document.getElementById('episodesWarning');
+        const exportWarning = document.getElementById('exportWarning');
         let exportData = null;
         let extractedTarBuffer = null;
         let cachedEpisodeRows = null;
@@ -1090,6 +1092,8 @@
             downloadSeriesCsvBtn.style.display = hasSeries ? 'inline-block' : 'none';
             downloadMoviesCsvBtn.style.display = hasMovies ? 'inline-block' : 'none';
             downloadEpisodesCsvBtn.style.display = hasEpisodeExports ? 'inline-block' : 'none';
+            episodesWarning.style.display = hasEpisodeExports ? 'flex' : 'none';
+            exportWarning.style.display = hasEpisodeExports ? 'flex' : 'flex';
             downloadBox.style.display = (hasSeries || hasMovies) ? 'flex' : 'none';
 
             const showRows = sortByLastWatched(Object.values(shows || {}).map(show => ({
