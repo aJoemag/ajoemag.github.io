@@ -1446,9 +1446,9 @@
                 const seenEpisodeCount = Object.values(shows[show_id].episodes).filter(ep =>
                     ep?.seen === true).length;
 
-                if (shows[show_id].watched_episode_count === undefined || seenEpisodeCount > shows[show_id].watched_episode_count) {
-                    shows[show_id].watched_episode_count = seenEpisodeCount;
-                }
+                //if (shows[show_id].watched_episode_count === undefined || seenEpisodeCount > shows[show_id].watched_episode_count) {
+                //    shows[show_id].watched_episode_count = seenEpisodeCount;
+                //}
 
                 if (shows[show_id].aired_episode_count === undefined) {
                     shows[show_id].aired_episode_count = episode.show?.aired_episodes;
