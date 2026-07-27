@@ -358,17 +358,19 @@
 
         <div class="file-input-wrapper" id="fileInputWrapper">
             <input type="file" id="fileInput" />
-            <p>Or drag and drop the DioCache.db or an android backup file here</p>
+            <p>Or drag and drop the DioCache.db, TAR archive, or android backup file here</p>
         </div>
 
         <div id="downloadBox"
             style="display: none; flex-direction: column; align-items: flex-start; gap: 0.75rem; margin: 0.75rem 0 0.5rem;">
-            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+            <div id="sourceButtonsRow" style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
                 <button id="downloadTarBtn" type="button"
                     style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #0f766e; color: white; cursor: pointer; font-weight: 600;">Download
                     Backup TAR</button>
+                <div id="downloadFileButtons"
+                    style="display: none; flex-wrap: wrap; align-items: center; gap: 0.75rem;"></div>
             </div>
-            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+            <div id="exportButtonsRow" style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
                 <button id="downloadSeriesCsvBtn" type="button"
                     style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
                     Trakt CSV (Series)</button>
@@ -379,7 +381,7 @@
                     style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #7c3aed; color: white; cursor: pointer; font-weight: 600;">Download
                     Trakt CSV (Episodes)</button>
             </div>
-            <div style="display: inline-block;">Importable into <a
+            <div id="exportHint" style="display: inline-block;">Importable into <a
                     href="https://app.trakt.tv/settings/data?source=trakt-csv&mode=media" target="_blank">Trakt</a>
             </div>
             <div id="episodesWarning"
@@ -405,11 +407,15 @@
         const downloadMoviesCsvBtn = document.getElementById('downloadMoviesCsvBtn');
         const downloadEpisodesCsvBtn = document.getElementById('downloadEpisodesCsvBtn');
         const downloadTarBtn = document.getElementById('downloadTarBtn');
+        const downloadFileButtons = document.getElementById('downloadFileButtons');
+        const exportButtonsRow = document.getElementById('exportButtonsRow');
+        const exportHint = document.getElementById('exportHint');
         const downloadBox = document.getElementById('downloadBox');
         const episodesWarning = document.getElementById('episodesWarning');
         const exportWarning = document.getElementById('exportWarning');
         let exportData = null;
         let extractedTarBuffer = null;
+        let extractedCacheFiles = [];
         let cachedEpisodeRows = null;
         let cachedEpisodeCsv = null;
 
@@ -417,6 +423,120 @@
             statusEl.textContent += msg + '\n';
             console.log(msg);
             statusEl.scrollTop = statusEl.scrollHeight;
+        }
+
+        function resetSourceDownloads() {
+            extractedTarBuffer = null;
+            extractedCacheFiles = [];
+            downloadTarBtn.style.display = 'none';
+            downloadFileButtons.innerHTML = '';
+            downloadFileButtons.style.display = 'none';
+        }
+
+        function getTarEntryFileName(entryPath) {
+            return String(entryPath || '').split('/').filter(Boolean).pop() || '';
+        }
+
+        function triggerDownload(buffer, filename, mimeType = 'application/octet-stream') {
+            const blob = new Blob([buffer], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function renderSourceDownloadButtons() {
+            downloadFileButtons.innerHTML = '';
+
+            if (extractedCacheFiles.length === 0) {
+                downloadFileButtons.style.display = 'none';
+                return;
+            }
+
+            extractedCacheFiles.forEach(file => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = `Download ${file.downloadName}`;
+                button.style.padding = '0.55rem 0.9rem';
+                button.style.border = 'none';
+                button.style.borderRadius = '999px';
+                button.style.background = '#475569';
+                button.style.color = 'white';
+                button.style.cursor = 'pointer';
+                button.style.fontWeight = '600';
+                button.addEventListener('click', () => {
+                    triggerDownload(file.buffer, file.downloadName);
+                });
+                downloadFileButtons.appendChild(button);
+            });
+
+            downloadFileButtons.style.display = 'flex';
+        }
+
+        function hasTarMagic(uint8View) {
+            if (!uint8View || uint8View.length < 512) {
+                return false;
+            }
+
+            const tarMagicStart = 257;
+            const tarMagic = 'ustar';
+            for (let index = 0; index < tarMagic.length; index += 1) {
+                if (uint8View[tarMagicStart + index] !== tarMagic.charCodeAt(index)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function extractDatabaseFromTar(payload) {
+            extractedTarBuffer = payload;
+
+            log(`TAR size: ${payload.length} bytes. Searching for DioCache.db...`);
+
+            let tarOffset = 0;
+            const cacheFiles = [];
+            while (tarOffset < payload.length - 512) {
+                let nameBytes = payload.subarray(tarOffset, tarOffset + 100);
+                let nameStr = String.fromCharCode.apply(null, nameBytes).replace(/\0.*/g, '');
+
+                if (!nameStr) break;
+
+                let sizeBytes = payload.subarray(tarOffset + 124, tarOffset + 136);
+                let sizeStr = String.fromCharCode.apply(null, sizeBytes).trim().replace(/\0.*/g, '');
+                let size = parseInt(sizeStr, 8);
+
+                tarOffset += 512;
+
+                const fileData = payload.subarray(tarOffset, tarOffset + size);
+                const downloadName = getTarEntryFileName(nameStr);
+
+                if (downloadName.startsWith('DioCache.db')) {
+                    cacheFiles.push({
+                        path: nameStr,
+                        downloadName,
+                        buffer: fileData
+                    });
+                }
+
+                tarOffset += Math.ceil(size / 512) * 512;
+            }
+
+            const dbFile = cacheFiles.find(file => file.downloadName === 'DioCache.db');
+            if (!dbFile) {
+                throw new Error('DioCache.db could not be found inside the TAR archive.');
+            }
+
+            extractedCacheFiles = cacheFiles;
+            renderSourceDownloadButtons();
+            log(`Found ${cacheFiles.length} DioCache.db-related file(s) in the archive.`);
+            log(`Found database: ${dbFile.path} (${dbFile.buffer.length} bytes)`);
+
+            return dbFile.buffer;
         }
 
         function handleFiles(files) {
@@ -455,6 +575,7 @@
             const file = e.target.files[0];
             if (!file) return;
 
+            resetSourceDownloads();
             statusEl.textContent = '';
             resultsEl.innerHTML = '';
             log(`Loading file: ${file.name} (${file.size} bytes)...`);
@@ -480,9 +601,16 @@
                         isSqlite = false;
                     }
 
+                    const isTar = hasTarMagic(uint8View);
+
                     if (isSqlite) {
                         log("SQLite magic signature detected. Loading directly...");
                         dbBuffer = uint8View;
+                    } else if (isTar) {
+                        log('TAR archive detected. Extracting DioCache.db...');
+                        downloadTarBtn.style.display = 'none';
+                        dbBuffer = extractDatabaseFromTar(uint8View);
+                        downloadBox.style.display = 'flex';
                     } else {
                         // 2. Scan first 512 bytes for Android Backup Magic ("ANDROID BACKUP\n")
                         const AB_MAGIC = "ANDROID BACKUP\n";
@@ -499,7 +627,7 @@
                             log(`Android Backup magic signature found at offset ${abOffset}. Starting extraction...`);
                             dbBuffer = extractFromBackup(uint8View, abOffset);
                         } else {
-                            throw new Error("File format not recognized. Magic signatures for neither SQLite nor Android Backup were found.");
+                            throw new Error("File format not recognized. Magic signatures for neither SQLite, TAR, nor Android Backup were found.");
                         }
                     }
 
@@ -524,15 +652,7 @@
                 return;
             }
 
-            const blob = new Blob([extractedTarBuffer], { type: 'application/x-tar' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'tvtime-backup.tar';
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
+            triggerDownload(extractedTarBuffer, 'tvtime-backup.tar', 'application/x-tar');
         }
 
         downloadTarBtn.addEventListener('click', downloadExtractedTar);
@@ -567,37 +687,10 @@
                 payload = pako.inflate(payload);
             }
 
-            extractedTarBuffer = payload;
             downloadTarBtn.style.display = 'inline-block';
             downloadBox.style.display = 'flex';
 
-            log(`Extracted TAR size: ${payload.length} bytes. Searching for DioCache.db...`);
-
-            let tarOffset = 0;
-            while (tarOffset < payload.length - 512) {
-                // Read file name (first 100 bytes of the 512-byte block)
-                let nameBytes = payload.subarray(tarOffset, tarOffset + 100);
-                let nameStr = String.fromCharCode.apply(null, nameBytes).replace(/\0.*/g, '');
-
-                if (!nameStr) break;
-
-                // Read file size (bytes 124 to 135, octal string)
-                let sizeBytes = payload.subarray(tarOffset + 124, tarOffset + 136);
-                let sizeStr = String.fromCharCode.apply(null, sizeBytes).trim().replace(/\0.*/g, '');
-                let size = parseInt(sizeStr, 8);
-
-                tarOffset += 512; // Skip the header block
-
-                if (nameStr.endsWith("DioCache.db")) {
-                    log(`Found database: ${nameStr} (${size} bytes)`);
-                    return payload.subarray(tarOffset, tarOffset + size);
-                }
-
-                // Skip the file data blocks (padded to 512 bytes)
-                tarOffset += Math.ceil(size / 512) * 512;
-            }
-
-            throw new Error("DioCache.db could not be found inside the backup.");
+            return extractDatabaseFromTar(payload);
         }
 
         function escapeHtml(value) {
@@ -1088,13 +1181,18 @@
             cachedEpisodeCsv = null;
             const hasSeries = shows && Object.keys(shows).length > 0;
             const hasMovies = (movies && Object.keys(movies).length > 0) || (towatchMovies && Object.keys(towatchMovies).length > 0);
+            const hasRecoveredMedia = hasSeries || hasMovies;
             const hasEpisodeExports = Object.values(shows || {}).some(show => Number(show?.watched_episode_count ?? 0) > 0);
+            const hasSourceDownloads = extractedCacheFiles.length > 0 || downloadTarBtn.style.display !== 'none';
+            const hasExportDownloads = hasSeries || hasMovies || hasEpisodeExports;
             downloadSeriesCsvBtn.style.display = hasSeries ? 'inline-block' : 'none';
             downloadMoviesCsvBtn.style.display = hasMovies ? 'inline-block' : 'none';
             downloadEpisodesCsvBtn.style.display = hasEpisodeExports ? 'inline-block' : 'none';
+            exportButtonsRow.style.display = hasExportDownloads ? 'flex' : 'none';
+            exportHint.style.display = hasExportDownloads ? 'inline-block' : 'none';
             episodesWarning.style.display = hasEpisodeExports ? 'flex' : 'none';
-            exportWarning.style.display = hasEpisodeExports ? 'flex' : 'flex';
-            downloadBox.style.display = (hasSeries || hasMovies) ? 'flex' : 'none';
+            exportWarning.style.display = hasExportDownloads ? 'flex' : 'none';
+            downloadBox.style.display = (hasRecoveredMedia || hasSourceDownloads) ? 'flex' : 'none';
 
             const showRows = sortByLastWatched(Object.values(shows || {}).map(show => ({
                 ...show,
@@ -1163,6 +1261,13 @@
 
                 return '<span class="badge">Not yet watched</span>';
             };
+
+            const mediaStatusHtml = hasRecoveredMedia ? '' : `
+                <section class="results-section" id="media-status-section">
+                    <h2>Recovered Media</h2>
+                    <p class="empty-state">No shows or movies were found in the selected file.</p>
+                </section>
+            `;
 
             const sectionsHtml = [
                 renderCards('Shows', showRows, show => `
@@ -1264,7 +1369,7 @@
                 `, 'user-section')
             ].join('');
 
-            resultsEl.innerHTML = `${navHtml}${sectionsHtml}`;
+            resultsEl.innerHTML = `${navHtml}${mediaStatusHtml}${sectionsHtml}`;
         }
 
         async function executeQuery(dbBuffer) {
@@ -1287,6 +1392,7 @@
 
             if (result.length === 0) {
                 log("Query executed successfully, but returned 0 rows.");
+                renderResults({}, {}, {}, {}, {});
                 return;
             }
 
@@ -1443,12 +1549,12 @@
                 shows[show_id].episodes[ep_id] = episode;
                 shows[show_id].episodes[ep_id].seen_date = seen_date
                 // contains name, number, season_number, seen_date, nb_times_watched, seen
-                const seenEpisodeCount = Object.values(shows[show_id].episodes).filter(ep =>
-                    ep?.seen === true).length;
+                // const seenEpisodeCount = Object.values(shows[show_id].episodes).filter(ep =>
+                //     ep?.seen === true).length;
 
-                //if (shows[show_id].watched_episode_count === undefined || seenEpisodeCount > shows[show_id].watched_episode_count) {
-                //    shows[show_id].watched_episode_count = seenEpisodeCount;
-                //}
+                // if (shows[show_id].watched_episode_count === undefined || seenEpisodeCount > shows[show_id].watched_episode_count) {
+                //     shows[show_id].watched_episode_count = seenEpisodeCount;
+                // }
 
                 if (shows[show_id].aired_episode_count === undefined) {
                     shows[show_id].aired_episode_count = episode.show?.aired_episodes;
