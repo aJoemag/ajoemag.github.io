@@ -650,15 +650,19 @@
             log(`Found database: ${dbFile.path} (${dbFile.buffer.length} bytes)`);
 
             extractedHomeWidgetJsonRows = [];
-            if (homeWidgetPrefsFile) {
-                log(`Found HomeWidgetPreferences.xml: ${homeWidgetPrefsFile.path} (${homeWidgetPrefsFile.buffer.length} bytes)`);
-                const widgetRows = parseHomeWidgetPreferencesXml(homeWidgetPrefsFile.buffer);
-                widgetRows.forEach(row => {
-                    log(`Extracted "${row.key}" JSON payload from HomeWidgetPreferences.xml (${row.text.length} chars).`);
-                });
-                extractedHomeWidgetJsonRows = widgetRows.map(row => row.text);
-            } else {
-                log('HomeWidgetPreferences.xml was not found inside the archive.');
+            try {
+                if (homeWidgetPrefsFile) {
+                    log(`Found HomeWidgetPreferences.xml: ${homeWidgetPrefsFile.path} (${homeWidgetPrefsFile.buffer.length} bytes)`);
+                    const widgetRows = parseHomeWidgetPreferencesXml(homeWidgetPrefsFile.buffer);
+                    widgetRows.forEach(row => {
+                        log(`Extracted "${row.key}" JSON payload from HomeWidgetPreferences.xml (${row.text.length} chars).`);
+                    });
+                    extractedHomeWidgetJsonRows = widgetRows.map(row => row.text);
+                } else {
+                    log('HomeWidgetPreferences.xml was not found inside the archive.');
+                }
+            } catch (err) {
+                log(`Could not parse HomeWidgetPreferences.xml: ${err.message}`);
             }
 
             return dbFile.buffer;
@@ -765,12 +769,21 @@
                             dbBuffer = extractFromBackup(uint8View, abOffset);
                             auxiliaryFiles = getAuxiliaryCacheFiles(extractedCacheFiles.map(normalizeCacheFileEntry), findMainCacheFile(extractedCacheFiles.map(normalizeCacheFileEntry)));
                         } else {
-                            throw new Error("File format not recognized. Magic signatures for neither SQLite, TAR, nor Android Backup were found.");
+                            const sidecarOnlyFiles = loadedFiles
+                                .map(file => ({ ...file, downloadName: file.name, suffix: getCacheFileSuffix(file.name) }))
+                                .filter(file => file.suffix !== '');
+
+                            if (sidecarOnlyFiles.length > 0) {
+                                auxiliaryFiles = sidecarOnlyFiles;
+                                log(`No DioCache.db found. Carving rows directly from ${sidecarOnlyFiles.length} sidecar file(s): ${sidecarOnlyFiles.map(file => file.downloadName).join(', ')}`);
+                            } else {
+                                throw new Error("File format not recognized. Magic signatures for neither SQLite, TAR, nor Android Backup were found.");
+                            }
                         }
                     }
                 }
 
-                if (!dbBuffer) {
+                if (!dbBuffer && auxiliaryFiles.length === 0) {
                     throw new Error("Could not load or locate the database buffer.");
                 }
 
@@ -1696,20 +1709,22 @@
                 locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
             });
 
-            log("Opening database and executing query...");
-            const db = new SQL.Database(dbBuffer);
-
-            let result;
-            try {
-                result = db.exec("SELECT content FROM cache_dio;");
-                if (result.length > 0) {
-                    result = result[0].values.map(row => row[0]);
-                } else {
-                    result = [];
-                    log("Query executed successfully, but returned 0 rows.");
+            let result = [];
+            if (dbBuffer) {
+                log("Opening database and executing query...");
+                const db = new SQL.Database(dbBuffer);
+                try {
+                    const queryResult = db.exec("SELECT content FROM cache_dio;");
+                    if (queryResult.length > 0) {
+                        result = queryResult[0].values.map(row => row[0]);
+                    } else {
+                        log("Query executed successfully, but returned 0 rows.");
+                    }
+                } catch (sqlErr) {
+                    log(sqlErr.message);
                 }
-            } catch (sqlErr) {
-                log(sqlErr.message);
+            } else {
+                log("No DioCache.db provided; carving rows from sidecar file(s) only.");
             }
             auxiliaryFiles.forEach(file => {
                 const carvedRows = carveRowsFromAuxiliaryFile(file);
@@ -2001,6 +2016,16 @@
         }
 
     </script>
+
+    <footer style="margin: 2rem auto; max-width: 1600px; padding: 0 1rem; text-align: center; font-size: 0.85rem; color: #777;">
+        <p>
+            This page was created with the help of AI. The code may be considered public domain and used freely.
+        </p>
+        <p>
+            Contact / Reddit: <a href="https://www.reddit.com/user/Joemag_xD/" target="_blank"
+                rel="noopener noreferrer">u/Joemag_xD</a>
+        </p>
+    </footer>
 </body>
 
 </html>
