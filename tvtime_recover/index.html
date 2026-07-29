@@ -343,7 +343,9 @@
                 <br>
                 <strong>On Pixel:</strong> It probably is not possible to get an unencrypted backup.
                 <br>
-                <strong>On Samsung:</strong> Follow <a href="https://www.reddit.com/r/TVTime/comments/1v77hto/simple_recovery_samsung_tv_time/" target="_blank" rel="noopener noreferrer">this recovery guide</a>.
+                <strong>On Samsung:</strong> Follow <a
+                    href="https://www.reddit.com/r/TVTime/comments/1v77hto/simple_recovery_samsung_tv_time/"
+                    target="_blank" rel="noopener noreferrer">this recovery guide</a>.
                 <br>
                 <strong>On other Android devices:</strong> I don't know. You may need to research vendor-specific ways
                 to back up the
@@ -359,8 +361,9 @@
         <!-- Accept any file, as we rely on magic bytes now -->
 
         <div class="file-input-wrapper" id="fileInputWrapper">
-            <input type="file" id="fileInput" />
-            <p>Or drag and drop the DioCache.db, TAR archive, or android backup file here</p>
+            <input type="file" id="fileInput" multiple />
+            <p>Or drag and drop the DioCache.db, optional -journal/-shm/-wal files, a TAR archive, or an android backup
+                file here</p>
         </div>
 
         <div id="downloadBox"
@@ -479,6 +482,81 @@
             downloadFileButtons.style.display = 'flex';
         }
 
+        function isSqliteBuffer(uint8View) {
+            const SQLITE_MAGIC = 'SQLite format 3\x00';
+            if (!uint8View || uint8View.length < 16) {
+                return false;
+            }
+
+            for (let index = 0; index < 16; index += 1) {
+                if (uint8View[index] !== SQLITE_MAGIC.charCodeAt(index)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function getCacheFileSuffix(fileName) {
+            const normalizedName = String(fileName || '');
+            return normalizedName.startsWith('DioCache.db') ? normalizedName.slice('DioCache.db'.length) : '';
+        }
+
+        function getSidecarSuffixForMain(fileName, mainFileName) {
+            const normalizedFileName = String(fileName || '');
+            const normalizedMainFileName = String(mainFileName || '');
+            if (!normalizedFileName || !normalizedMainFileName || normalizedFileName === normalizedMainFileName) {
+                return '';
+            }
+            if (!normalizedFileName.startsWith(normalizedMainFileName)) {
+                return '';
+            }
+
+            const suffix = normalizedFileName.slice(normalizedMainFileName.length);
+            if (!suffix) {
+                return '';
+            }
+
+            if (suffix === '-wal' || suffix === '-shm' || suffix === '-journal' || suffix.startsWith('-journal')) {
+                return suffix;
+            }
+
+            return '';
+        }
+
+        function normalizeCacheFileEntry(file) {
+            const downloadName = file.downloadName || file.name || getTarEntryFileName(file.path);
+            return {
+                ...file,
+                downloadName,
+                suffix: getCacheFileSuffix(downloadName)
+            };
+        }
+
+        function findMainCacheFile(files) {
+            return files.find(file => file.downloadName === 'DioCache.db')
+                || files.find(file => file.suffix === '' && isSqliteBuffer(file.buffer));
+        }
+
+        function getAuxiliaryCacheFiles(files, mainFile) {
+            return files.filter(file => file !== mainFile && file.suffix !== '');
+        }
+
+        async function readFilesAsUint8Arrays(files) {
+            return Promise.all(Array.from(files || []).map(file => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = event => {
+                    resolve({
+                        name: file.name,
+                        size: file.size,
+                        buffer: new Uint8Array(event.target.result)
+                    });
+                };
+                reader.onerror = () => reject(reader.error || new Error(`Could not read ${file.name}`));
+                reader.readAsArrayBuffer(file);
+            })));
+        }
+
         function hasTarMagic(uint8View) {
             if (!uint8View || uint8View.length < 512) {
                 return false;
@@ -574,48 +652,60 @@
         });
 
         fileInput.addEventListener('change', async function (e) {
-            const file = e.target.files[0];
-            if (!file) return;
+            const selectedFiles = Array.from(e.target.files || []);
+            if (selectedFiles.length === 0) return;
 
             resetSourceDownloads();
             statusEl.textContent = '';
             resultsEl.innerHTML = '';
-            log(`Loading file: ${file.name} (${file.size} bytes)...`);
+            log(selectedFiles.length === 1
+                ? `Loading file: ${selectedFiles[0].name} (${selectedFiles[0].size} bytes)...`
+                : `Loading ${selectedFiles.length} files...`);
 
-            const reader = new FileReader();
-            reader.onload = async function (event) {
-                try {
-                    const arrayBuffer = event.target.result;
-                    const uint8View = new Uint8Array(arrayBuffer);
-                    let dbBuffer = null;
+            try {
+                const loadedFiles = await readFilesAsUint8Arrays(selectedFiles);
 
-                    // 1. Check for SQLite Magic (First 16 bytes: "SQLite format 3\000")
-                    const SQLITE_MAGIC = "SQLite format 3\x00";
-                    let isSqlite = true;
-                    if (uint8View.length >= 16) {
-                        for (let i = 0; i < 16; i++) {
-                            if (uint8View[i] !== SQLITE_MAGIC.charCodeAt(i)) {
-                                isSqlite = false;
-                                break;
-                            }
-                        }
-                    } else {
-                        isSqlite = false;
+                let dbBuffer = null;
+                let auxiliaryFiles = [];
+
+                const sqliteMainCandidates = loadedFiles
+                    .filter(file => isSqliteBuffer(file.buffer));
+                const preferredMainFile = sqliteMainCandidates.find(file => file.name === 'DioCache.db') || sqliteMainCandidates[0];
+
+                if (preferredMainFile) {
+                    dbBuffer = preferredMainFile.buffer;
+                    auxiliaryFiles = loadedFiles
+                        .filter(file => file !== preferredMainFile)
+                        .map(file => ({
+                            ...file,
+                            downloadName: file.name,
+                            suffix: getSidecarSuffixForMain(file.name, preferredMainFile.name)
+                        }))
+                        .filter(file => file.suffix !== '');
+
+                    log(`SQLite database detected: ${preferredMainFile.name}`);
+                    if (sqliteMainCandidates.length > 1) {
+                        log(`Found ${sqliteMainCandidates.length} SQLite DB files. Using ${preferredMainFile.name} as primary.`);
                     }
-
+                    if (auxiliaryFiles.length > 0) {
+                        log(`Detected ${auxiliaryFiles.length} SQLite sidecar file(s): ${auxiliaryFiles.map(file => file.downloadName).join(', ')}`);
+                    }
+                } else {
+                    const firstFile = loadedFiles[0];
+                    const uint8View = firstFile.buffer;
                     const isTar = hasTarMagic(uint8View);
 
-                    if (isSqlite) {
-                        log("SQLite magic signature detected. Loading directly...");
+                    if (isSqliteBuffer(uint8View)) {
+                        log('SQLite magic signature detected. Loading directly...');
                         dbBuffer = uint8View;
                     } else if (isTar) {
                         log('TAR archive detected. Extracting DioCache.db...');
                         downloadTarBtn.style.display = 'none';
                         dbBuffer = extractDatabaseFromTar(uint8View);
+                        auxiliaryFiles = getAuxiliaryCacheFiles(extractedCacheFiles.map(normalizeCacheFileEntry), findMainCacheFile(extractedCacheFiles.map(normalizeCacheFileEntry)));
                         downloadBox.style.display = 'flex';
                     } else {
-                        // 2. Scan first 512 bytes for Android Backup Magic ("ANDROID BACKUP\n")
-                        const AB_MAGIC = "ANDROID BACKUP\n";
+                        const AB_MAGIC = 'ANDROID BACKUP\n';
                         const searchLimit = Math.min(uint8View.length, 512);
 
                         let headerStr = "";
@@ -628,23 +718,21 @@
                         if (abOffset !== -1) {
                             log(`Android Backup magic signature found at offset ${abOffset}. Starting extraction...`);
                             dbBuffer = extractFromBackup(uint8View, abOffset);
+                            auxiliaryFiles = getAuxiliaryCacheFiles(extractedCacheFiles.map(normalizeCacheFileEntry), findMainCacheFile(extractedCacheFiles.map(normalizeCacheFileEntry)));
                         } else {
                             throw new Error("File format not recognized. Magic signatures for neither SQLite, TAR, nor Android Backup were found.");
                         }
                     }
-
-                    if (!dbBuffer) {
-                        throw new Error("Could not load or locate the database buffer.");
-                    }
-
-                    await executeQuery(dbBuffer);
-
-                } catch (err) {
-                    log(`ERROR: ${err.message}`);
                 }
-            };
 
-            reader.readAsArrayBuffer(file);
+                if (!dbBuffer) {
+                    throw new Error("Could not load or locate the database buffer.");
+                }
+
+                await executeQuery(dbBuffer, auxiliaryFiles);
+            } catch (err) {
+                log(`ERROR: ${err.message}`);
+            }
         });
 
         // Updated extraction logic to handle a dynamic start offset
@@ -1374,7 +1462,190 @@
             resultsEl.innerHTML = `${navHtml}${mediaStatusHtml}${sectionsHtml}`;
         }
 
-        async function executeQuery(dbBuffer) {
+        function looksLikeTvTimePayload(payload) {
+            // if (JSON.stringify(payload).length > 1000) // large always
+            //     return true;
+            // return false
+            if (!payload) {
+                return false;
+            }
+
+            if (Array.isArray(payload)) {
+                const first = payload[0];
+                if (first && typeof first === 'object') {
+                    if (first.type == "poster") {
+                        return false;
+                    }
+                    return Boolean(first.show?.id || first.entity_type || first.type || first.meta?.id);
+                }
+                return false;
+            }
+
+            if (typeof payload !== 'object') {
+                return false;
+            }
+
+            if ((payload.follower_count !== undefined && payload.comment_count !== 0) || payload.following_count !== undefined) {
+                return true;
+            }
+            if (Array.isArray(payload.shows)) {
+                return true;
+            }
+            if (payload.status === 'success') {
+                return true;
+            }
+            if (payload.show?.id) {
+                return true;
+            }
+            if (payload.data && typeof payload.data === 'object') {
+                return true;
+            }
+            if (payload.entity_type !== undefined) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function carveJsonPayloadsFromBytes(buffer, maxCandidates = 100000) {
+            if (!buffer || buffer.length < 16) {
+                return [];
+            }
+
+            const carved = [];
+            const decoder = new TextDecoder();
+            const maxPayloadBytes = 2 * 1024 * 1024;
+
+            for (let start = 0; start < buffer.length; start += 1) {
+                const firstByte = buffer[start];
+                if (firstByte !== 123 && firstByte !== 91) {
+                    continue;
+                }
+
+                const stack = [firstByte === 123 ? 125 : 93];
+                let inString = false;
+                let escaped = false;
+
+                for (let end = start + 1; end < buffer.length && end - start <= maxPayloadBytes; end += 1) {
+                    const byte = buffer[end];
+
+                    if (inString) {
+                        if (escaped) {
+                            escaped = false;
+                            continue;
+                        }
+                        if (byte === 92) {
+                            escaped = true;
+                            continue;
+                        }
+                        if (byte === 34) {
+                            inString = false;
+                        }
+                        continue;
+                    }
+
+                    if (byte === 34) {
+                        inString = true;
+                        continue;
+                    }
+                    if (byte === 123) {
+                        stack.push(125);
+                        continue;
+                    }
+                    if (byte === 91) {
+                        stack.push(93);
+                        continue;
+                    }
+                    if (byte === 125 || byte === 93) {
+                        if (stack.length === 0 || stack[stack.length - 1] !== byte) {
+                            break;
+                        }
+                        stack.pop();
+                        if (stack.length !== 0) {
+                            continue;
+                        }
+
+                        const slice = buffer.subarray(start, end + 1);
+                        if (slice.length < 16) {
+                            break;
+                        }
+
+                        try {
+                            const text = decoder.decode(slice);
+                            const parsed = JSON.parse(text);
+                            if (!looksLikeTvTimePayload(parsed)) {
+                                break;
+                            }
+
+                            carved.push(slice);
+                            if (carved.length >= maxCandidates) {
+                                return carved;
+                            }
+                        } catch {
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return carved;
+        }
+        function buildDeinterleavedJournalCandidate(buffer, separatorSize = 12) {
+            let deinterleavedBuffer = new Uint8Array(buffer.length);
+            let deinterleavedCursor = 0;
+            let cursor = 0;
+            while (cursor < buffer.length - separatorSize) {
+                // if: any, any, any, any, NULL, NULL, Any, ANY, ANY, ANY, ANY, ANY, skip those 12 bytes
+                if (buffer[cursor + 4] === 0 && buffer[cursor + 5] === 0) {
+                    cursor += separatorSize;
+                    continue;
+                }
+                // if ascii data, copy the byte to deinterleavedBuffer
+                if ((buffer[cursor] >= 32 && buffer[cursor] <= 126) || buffer[cursor] === 10 || buffer[cursor] === 13) {
+                    deinterleavedBuffer[deinterleavedCursor] = buffer[cursor];
+                    deinterleavedCursor += 1;
+                }
+                cursor += 1;
+            }
+            return deinterleavedBuffer.subarray(0, deinterleavedCursor);
+        }
+
+        function carveRowsFromAuxiliaryFile(file) {
+
+            if (!file?.buffer) {
+                return;
+            }
+
+            if (String(file.suffix || '').startsWith('-journal')) {
+
+                const deinterleaved = buildDeinterleavedJournalCandidate(file.buffer);
+                if (!deinterleaved) {
+                    return [];
+                }
+
+                const fileLabel = file.downloadName || file.name || 'journal';
+                log(`Journal deinterleave in ${fileLabel}: ${file.buffer.length - deinterleaved.length} bytes removed`);
+
+                const carvedFromDeinterleaved = carveJsonPayloadsFromBytes(deinterleaved);
+                console.log(carvedFromDeinterleaved.map(payload => JSON.parse(new TextDecoder().decode(payload)))); // keep
+                if (carvedFromDeinterleaved.length > 0) {
+                    log(`Raw byte carving (deinterleaved journal) in ${fileLabel}: ${carvedFromDeinterleaved.length} JSON payload(s)`);
+                }
+
+                return carvedFromDeinterleaved;
+            } else {
+                const carvedPayloads = carveJsonPayloadsFromBytes(file.buffer, perFileLimit);
+                if (carvedPayloads.length > 0) {
+                    console.log(carvedPayloads.map(payload => JSON.parse(new TextDecoder().decode(payload)))); // keep
+                    const fileLabel = file.downloadName || file.name || 'sidecar';
+                    log(`Raw byte carving in ${fileLabel}: ${carvedPayloads.length} JSON payload(s)`);
+                }
+                return carvedPayloads;
+            }
+
+        }
+
+        async function executeQuery(dbBuffer, auxiliaryFiles = []) {
             log("Initializing SQLite engine...");
             const SQL = await initSqlJs({
                 locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
@@ -1383,22 +1654,34 @@
             log("Opening database and executing query...");
             const db = new SQL.Database(dbBuffer);
 
-            const query = "SELECT content FROM cache_dio;";
-
             let result;
             try {
-                result = db.exec(query);
+                result = db.exec("SELECT content FROM cache_dio;");
+                if (result.length > 0) {
+                    result = result[0].values.map(row => row[0]);
+                } else {
+                    result = [];
+                    log("Query executed successfully, but returned 0 rows.");
+                }
             } catch (sqlErr) {
-                throw new Error(`SQL Error: ${sqlErr.message}`);
+                log(sqlErr.message);
             }
+            auxiliaryFiles.forEach(file => {
+                const carvedRows = carveRowsFromAuxiliaryFile(file);
+                if (carvedRows.length > 0) {
+                    result.push(...carvedRows);
+                    log(`Merged ${carvedRows.length} carved payload row(s). Total rows now: ${result.length}`);
+                }
+            });
 
             if (result.length === 0) {
-                log("Query executed successfully, but returned 0 rows.");
+                log("No rows found in the database or carved from auxiliary files.");
                 renderResults({}, {}, {}, {}, {});
                 return;
             }
 
-            log(`Query successful. Found ${result[0].values.length} rows.`);
+
+            log(`Query successful. Found ${result.length} rows.`);
             // renderTable(result[0].columns, result[0].values);
 
             let shows = {};
@@ -1548,8 +1831,12 @@
                 shows[show_id] = shows[show_id] ?? {};
                 shows[show_id].id = shows[show_id].id ?? show_id;
                 shows[show_id].episodes = shows[show_id].episodes ?? {};
-                shows[show_id].episodes[ep_id] = episode;
-                shows[show_id].episodes[ep_id].seen_date = seen_date
+                shows[show_id].episodes[ep_id] = shows[show_id].episodes[ep_id] ?? {};
+                shows[show_id].episodes[ep_id].name = shows[show_id].episodes[ep_id].name ?? episode.name;
+                shows[show_id].episodes[ep_id].seen_date = shows[show_id].episodes[ep_id].seen_date ?? seen_date
+                shows[show_id].episodes[ep_id].nb_times_watched = Math.max(shows[show_id].episodes[ep_id].nb_times_watched ?? 0, episode.nb_times_watched ?? 0)
+                shows[show_id].episodes[ep_id].season_number = shows[show_id].episodes[ep_id].season_number ?? episode.season_number
+                shows[show_id].episodes[ep_id].number = shows[show_id].episodes[ep_id].number ?? episode.number
                 // contains name, number, season_number, seen_date, nb_times_watched, seen
                 // const seenEpisodeCount = Object.values(shows[show_id].episodes).filter(ep =>
                 //     ep?.seen === true).length;
@@ -1569,11 +1856,10 @@
 
 
             }
-
-            for (const row of result[0].values) {
+            for (const row of result) {
                 try {
                     // console.log(row)
-                    const data = JSON.parse(displayVal = new TextDecoder().decode(row[0]))
+                    const data = JSON.parse(displayVal = new TextDecoder().decode(row))
                     if ("follower_count" in data) {
                         user["follower_count"] = data["follower_count"];
                         user["name"] = data["name"];
@@ -1626,6 +1912,15 @@
                         data.forEach(episode => {
                             insert_or_update_episode(episode);
                         });
+                    } else if (data["season_number"] !== undefined && data["number"] !== undefined && data["show"]?.id) {
+                        insert_or_update_episode(data);
+                    } else if (data["entity_type"] == "movie" && data["type"] == "towatch") {
+                        insert_or_update_towatch_movie(data)
+                    } else if (data["entity_type"] == "series" && data["type"] == "follow") {
+                        // console.log("series follow", data)
+                        insert_or_update_show_from_list(data)
+                    } else if (data["entity_type"] == "movie" && data["type"] == "watch") {
+                        insert_or_update_movie(data);
                     }
                 } catch (e) {
                     console.log(e, new TextDecoder().decode(row[0]))
