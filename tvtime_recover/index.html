@@ -180,6 +180,12 @@
             white-space: nowrap;
         }
 
+        .results-summary {
+            margin: 0 0 1rem;
+            font-size: 0.95rem;
+            color: #444;
+        }
+
         /* @media (max-width: 600px) {
             .results-nav {
                 top: 0.5rem;
@@ -1254,14 +1260,14 @@
 
         function renderCards(title, items, cardRenderer, sectionId) {
             if (!items || items.length === 0) {
-                return `<section class="results-section" id="${sectionId}"><h2>${escapeHtml(title)}</h2><p class="empty-state">No entries found.</p></section>`;
+                return `<section class="results-section" id="${sectionId}"><h2>${escapeHtml(title)} (0)</h2><p class="empty-state">No entries found.</p></section>`;
             }
 
             const cardsHtml = items.map(item => `<article class="result-card">${cardRenderer(item)}</article>`).join('');
 
             return `
                 <section class="results-section" id="${sectionId}">
-                    <h2>${escapeHtml(title)}</h2>
+                    <h2>${escapeHtml(title)} (${items.length})</h2>
                     <div class="result-grid">${cardsHtml}</div>
                 </section>
             `;
@@ -1399,6 +1405,14 @@
                 </nav>
             `;
 
+            const summaryHtml = hasRecoveredMedia ? `
+                <p class="results-summary">
+                    Found <strong>${showRows.length}</strong> show${showRows.length === 1 ? '' : 's'} and
+                    <strong>${movieRows.length}</strong> movie${movieRows.length === 1 ? '' : 's'}
+                    (plus <strong>${towatchRows.length}</strong> to-watch).
+                </p>
+            ` : '';
+
             const showWatchStatusBadge = (show) => {
                 const watchedEpisodeCount = show?.watched_episode_count;
                 const hasLastWatched = Boolean(show?.last_watched);
@@ -1517,7 +1531,7 @@
                 `, 'user-section')
             ].join('');
 
-            resultsEl.innerHTML = `${navHtml}${mediaStatusHtml}${sectionsHtml}`;
+            resultsEl.innerHTML = `${navHtml}${summaryHtml}${mediaStatusHtml}${sectionsHtml}`;
         }
 
         function looksLikeTvTimePayload(payload) {
