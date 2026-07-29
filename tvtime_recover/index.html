@@ -421,6 +421,7 @@
         let exportData = null;
         let extractedTarBuffer = null;
         let extractedCacheFiles = [];
+        let extractedHomeWidgetJsonRows = [];
         let cachedEpisodeRows = null;
         let cachedEpisodeCsv = null;
 
@@ -433,6 +434,7 @@
         function resetSourceDownloads() {
             extractedTarBuffer = null;
             extractedCacheFiles = [];
+            extractedHomeWidgetJsonRows = [];
             downloadTarBtn.style.display = 'none';
             downloadFileButtons.innerHTML = '';
             downloadFileButtons.style.display = 'none';
@@ -573,13 +575,38 @@
             return true;
         }
 
+        function parseHomeWidgetPreferencesXml(buffer) {
+            const xmlText = new TextDecoder('utf-8').decode(buffer);
+            const jsonRows = [];
+
+            try {
+                const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+                if (doc.querySelector('parsererror')) {
+                    throw new Error('XML parser reported a syntax error.');
+                }
+
+                ['showsWatchList', 'showsUpcoming'].forEach(key => {
+                    const node = doc.querySelector(`map > string[name="${key}"]`);
+                    const text = node?.textContent?.trim();
+                    if (text) {
+                        jsonRows.push({ key, text });
+                    }
+                });
+            } catch (err) {
+                log(`Could not parse HomeWidgetPreferences.xml: ${err.message}`);
+            }
+
+            return jsonRows;
+        }
+
         function extractDatabaseFromTar(payload) {
             extractedTarBuffer = payload;
 
-            log(`TAR size: ${payload.length} bytes. Searching for DioCache.db...`);
+            log(`TAR size: ${payload.length} bytes. Searching for DioCache.db and HomeWidgetPreferences.xml...`);
 
             let tarOffset = 0;
             const cacheFiles = [];
+            let homeWidgetPrefsFile = null;
             while (tarOffset < payload.length - 512) {
                 let nameBytes = payload.subarray(tarOffset, tarOffset + 100);
                 let nameStr = String.fromCharCode.apply(null, nameBytes).replace(/\0.*/g, '');
@@ -601,6 +628,12 @@
                         downloadName,
                         buffer: fileData
                     });
+                } else if (downloadName === 'HomeWidgetPreferences.xml' && !homeWidgetPrefsFile) {
+                    homeWidgetPrefsFile = {
+                        path: nameStr,
+                        downloadName,
+                        buffer: fileData
+                    };
                 }
 
                 tarOffset += Math.ceil(size / 512) * 512;
@@ -615,6 +648,18 @@
             renderSourceDownloadButtons();
             log(`Found ${cacheFiles.length} DioCache.db-related file(s) in the archive.`);
             log(`Found database: ${dbFile.path} (${dbFile.buffer.length} bytes)`);
+
+            extractedHomeWidgetJsonRows = [];
+            if (homeWidgetPrefsFile) {
+                log(`Found HomeWidgetPreferences.xml: ${homeWidgetPrefsFile.path} (${homeWidgetPrefsFile.buffer.length} bytes)`);
+                const widgetRows = parseHomeWidgetPreferencesXml(homeWidgetPrefsFile.buffer);
+                widgetRows.forEach(row => {
+                    log(`Extracted "${row.key}" JSON payload from HomeWidgetPreferences.xml (${row.text.length} chars).`);
+                });
+                extractedHomeWidgetJsonRows = widgetRows.map(row => row.text);
+            } else {
+                log('HomeWidgetPreferences.xml was not found inside the archive.');
+            }
 
             return dbFile.buffer;
         }
@@ -1673,6 +1718,13 @@
                     log(`Merged ${carvedRows.length} carved payload row(s). Total rows now: ${result.length}`);
                 }
             });
+            console.log(extractedHomeWidgetJsonRows)
+
+            if (extractedHomeWidgetJsonRows.length > 0) {
+                const widgetRowBuffers = extractedHomeWidgetJsonRows.map(text => new TextEncoder().encode(text));
+                result.push(...widgetRowBuffers);
+                log(`Merged ${widgetRowBuffers.length} row(s) from HomeWidgetPreferences.xml. Total rows now: ${result.length}`);
+            }
 
             if (result.length === 0) {
                 log("No rows found in the database or carved from auxiliary files.");
@@ -1845,10 +1897,20 @@
                 //     shows[show_id].watched_episode_count = seenEpisodeCount;
                 // }
 
+                if (episode.show?.aired_episode_count !== undefined) {
+                    insert_or_update_show(episode.show);
+                }
+
                 if (shows[show_id].aired_episode_count === undefined) {
                     shows[show_id].aired_episode_count = episode.show?.aired_episodes;
                 } else if (episode.show?.aired_episodes !== undefined) {
                     shows[show_id].aired_episode_count = Math.max(shows[show_id].aired_episode_count, episode.show?.aired_episodes);
+                }
+
+                if (shows[show_id].watched_episode_count === undefined) {
+                    shows[show_id].watched_episode_count = episode.show?.seen_episodes;
+                } else if (episode.show?.seen_episodes !== undefined) {
+                    shows[show_id].watched_episode_count = Math.max(shows[show_id].watched_episode_count, episode.show?.seen_episodes);
                 }
                 shows[show_id].name = shows[show_id].name ?? episode.show?.name;
                 shows[show_id].poster = shows[show_id].poster ?? (episode.show?.all_images?.poster?.[0] ? { url: episode.show?.all_images?.poster?.[0] } : undefined);
@@ -1910,6 +1972,7 @@
                         }
                     } else if (data[0]?.show?.id) {
                         data.forEach(episode => {
+                            // console.log(episode)
                             insert_or_update_episode(episode);
                         });
                     } else if (data["season_number"] !== undefined && data["number"] !== undefined && data["show"]?.id) {
