@@ -131,13 +131,15 @@
             width: 80px;
             height: 110px;
             border-radius: 10px;
-            background: #e5e7eb;
-            color: #6b7280;
+            background: linear-gradient(160deg, var(--poster-color, #94a3b8), color-mix(in srgb, var(--poster-color, #94a3b8) 55%, #111827));
+            color: #fff;
             display: grid;
             place-items: center;
-            font-size: 0.8rem;
+            font-size: 2rem;
+            font-weight: 700;
             text-align: center;
             flex-shrink: 0;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
         }
 
         .result-title {
@@ -646,14 +648,17 @@
             }
 
             const dbFile = cacheFiles.find(file => file.downloadName === 'DioCache.db');
-            if (!dbFile) {
-                throw new Error('DioCache.db could not be found inside the TAR archive.');
-            }
 
             extractedCacheFiles = cacheFiles;
             renderSourceDownloadButtons();
-            log(`Found ${cacheFiles.length} DioCache.db-related file(s) in the archive.`);
-            log(`Found database: ${dbFile.path} (${dbFile.buffer.length} bytes)`);
+            if (cacheFiles.length > 0) {
+                log(`Found ${cacheFiles.length} DioCache.db-related file(s) in the archive.`);
+            }
+            if (dbFile) {
+                log(`Found database: ${dbFile.path} (${dbFile.buffer.length} bytes)`);
+            } else {
+                log('DioCache.db was not found inside the archive. Will try to recover data from sidecar file(s) and HomeWidgetPreferences.xml instead.');
+            }
 
             extractedHomeWidgetJsonRows = [];
             try {
@@ -671,7 +676,11 @@
                 log(`Could not parse HomeWidgetPreferences.xml: ${err.message}`);
             }
 
-            return dbFile.buffer;
+            if (!dbFile && cacheFiles.length === 0 && extractedHomeWidgetJsonRows.length === 0) {
+                throw new Error('Neither DioCache.db, related sidecar files, nor HomeWidgetPreferences.xml could be found inside the archive.');
+            }
+
+            return dbFile ? dbFile.buffer : null;
         }
 
         function handleFiles(files) {
@@ -789,7 +798,7 @@
                     }
                 }
 
-                if (!dbBuffer && auxiliaryFiles.length === 0) {
+                if (!dbBuffer && auxiliaryFiles.length === 0 && extractedHomeWidgetJsonRows.length === 0) {
                     throw new Error("Could not load or locate the database buffer.");
                 }
 
@@ -872,15 +881,35 @@
             return String(value);
         }
 
+        // This CDN no longer serves any posters (always 404s), so treat it as "no poster available".
+        const DEAD_POSTER_HOSTS = ['d36rlb2fgh8cjd.cloudfront.net'];
+
+        function isDeadPosterUrl(url) {
+            return typeof url === 'string' && DEAD_POSTER_HOSTS.some(host => url.includes(host));
+        }
+
         function getPosterUrl(poster) {
             if (!poster) return '';
-            if (typeof poster === 'string') return poster;
+            if (typeof poster === 'string') return isDeadPosterUrl(poster) ? '' : poster;
             if (Array.isArray(poster)) return getPosterUrl(poster[0]);
             if (typeof poster === 'object') {
-                if (typeof poster.url === 'string') return poster.url;
-                if (typeof poster.poster?.url === 'string') return poster.poster.url;
+                if (typeof poster.url === 'string') return isDeadPosterUrl(poster.url) ? '' : poster.url;
+                if (typeof poster.poster?.url === 'string') return isDeadPosterUrl(poster.poster.url) ? '' : poster.poster.url;
             }
             return '';
+        }
+
+        const POSTER_PLACEHOLDER_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+        function renderPosterPlaceholder(name) {
+            const label = String(name ?? '').trim();
+            const initial = label ? label[0].toUpperCase() : '?';
+            let hash = 0;
+            for (let i = 0; i < label.length; i += 1) {
+                hash = (hash * 31 + label.charCodeAt(i)) >>> 0;
+            }
+            const color = POSTER_PLACEHOLDER_COLORS[hash % POSTER_PLACEHOLDER_COLORS.length];
+            return `<div class="poster-placeholder" style="--poster-color: ${color};">${escapeHtml(initial)}</div>`;
         }
 
         function createLink(url, label) {
@@ -1363,6 +1392,7 @@
                 posterUrl: getPosterUrl(movie.poster),
                 imdbUrl: movie.imdb_id ? `https://www.imdb.com/title/${movie.imdb_id}` : '',
                 tvdbUrl: movie.tvdb_id ? `https://www.thetvdb.com/dereferrer/movie/${movie.tvdb_id}` : '',
+                webArchiveUrl: movie.name ? '' : `https://web.archive.org/web/2/https://www.tvtime.com/movie/${key}`,
                 googleUrl: movie.name ? '' : `https://www.google.com/search?q=${encodeURIComponent(key)}`
             })));
 
@@ -1373,6 +1403,7 @@
                 posterUrl: getPosterUrl(movie.poster),
                 imdbUrl: movie.imdb_id ? `https://www.imdb.com/title/${movie.imdb_id}` : '',
                 tvdbUrl: movie.tvdb_id ? `https://www.thetvdb.com/dereferrer/movie/${movie.tvdb_id}` : '',
+                webArchiveUrl: movie.name ? '' : `https://web.archive.org/web/2/https://www.tvtime.com/movie/${key}`,
                 googleUrl: movie.name ? '' : `https://www.google.com/search?q=${encodeURIComponent(key)}`
             })));
 
@@ -1434,7 +1465,7 @@
             const sectionsHtml = [
                 renderCards('Shows', showRows, show => `
                     <div class="result-card-top">
-                        ${show.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(show.posterUrl)}" alt="${escapeHtml(show.name)}" />` : '<div class="poster-placeholder">No poster</div>'}
+                        ${show.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(show.posterUrl)}" alt="${escapeHtml(show.name)}" />` : renderPosterPlaceholder(show.name)}
                         <div>
                             <h3 class="result-title">${escapeHtml(show.name)}</h3>
                             <div class="result-meta">
@@ -1460,7 +1491,7 @@
                 `, 'shows-section'),
                 renderCards('Movies', movieRows, movie => `
                     <div class="result-card-top">
-                        ${movie.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(movie.posterUrl)}" alt="${escapeHtml(movie.name)}" />` : '<div class="poster-placeholder">No poster</div>'}
+                        ${movie.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(movie.posterUrl)}" alt="${escapeHtml(movie.name)}" />` : renderPosterPlaceholder(movie.name)}
                         <div>
                             <h3 class="result-title">${escapeHtml(movie.name)}</h3>
                             <div class="result-meta">
@@ -1473,12 +1504,13 @@
                     <div class="result-links">
                         ${movie.tvdbUrl ? createLink(movie.tvdbUrl, 'TVDB') : ''}
                         ${movie.imdbUrl ? createLink(movie.imdbUrl, 'IMDb') : ''}
+                        ${movie.webArchiveUrl ? createLink(movie.webArchiveUrl, 'Web Archive') : ''}
                         ${movie.googleUrl ? createLink(movie.googleUrl, 'Google') : ''}
                     </div>
                 `, 'movies-section'),
                 renderCards('To-Watch Movies', towatchRows, movie => `
                     <div class="result-card-top">
-                        ${movie.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(movie.posterUrl)}" alt="${escapeHtml(movie.name)}" />` : '<div class="poster-placeholder">No poster</div>'}
+                        ${movie.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(movie.posterUrl)}" alt="${escapeHtml(movie.name)}" />` : renderPosterPlaceholder(movie.name)}
                         <div>
                             <h3 class="result-title">${escapeHtml(movie.name)}</h3>
                             <div class="result-meta">
@@ -1490,12 +1522,13 @@
                     <div class="result-links">
                         ${movie.tvdbUrl ? createLink(movie.tvdbUrl, 'TVDB') : ''}
                         ${movie.imdbUrl ? createLink(movie.imdbUrl, 'IMDb') : ''}
+                        ${movie.webArchiveUrl ? createLink(movie.webArchiveUrl, 'Web Archive') : ''}
                         ${movie.googleUrl ? createLink(movie.googleUrl, 'Google') : ''}
                     </div>
                 `, 'towatch-section'),
                 renderCards('Lists', listRows, list => `
                     <div class="result-card-top">
-                        ${list.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(list.posterUrl)}" alt="${escapeHtml(list.name)}" />` : '<div class="poster-placeholder">No poster</div>'}
+                        ${list.posterUrl ? `<img class="poster-thumbnail" src="${escapeHtml(list.posterUrl)}" alt="${escapeHtml(list.name)}" />` : renderPosterPlaceholder(list.name)}
                         <div>
                             <h3 class="result-title">${escapeHtml(list.name)}</h3>
                             <div class="result-meta">
@@ -1726,16 +1759,28 @@
             let result = [];
             if (dbBuffer) {
                 log("Opening database and executing query...");
-                const db = new SQL.Database(dbBuffer);
                 try {
-                    const queryResult = db.exec("SELECT content FROM cache_dio;");
-                    if (queryResult.length > 0) {
-                        result = queryResult[0].values.map(row => row[0]);
-                    } else {
-                        log("Query executed successfully, but returned 0 rows.");
+                    const db = new SQL.Database(dbBuffer);
+                    try {
+                        const queryResult = db.exec("SELECT content FROM cache_dio;");
+                        if (queryResult.length > 0) {
+                            result = queryResult[0].values.map(row => row[0]);
+                        } else {
+                            log("Query executed successfully, but returned 0 rows.");
+                        }
+                    } catch (sqlErr) {
+                        log(`Query failed: ${sqlErr.message}`);
                     }
-                } catch (sqlErr) {
-                    log(sqlErr.message);
+                } catch (openErr) {
+                    log(`Could not open DioCache.db (it may be small/incomplete or corrupt): ${openErr.message}`);
+                }
+
+                if (result.length === 0) {
+                    const carvedFromDb = carveJsonPayloadsFromBytes(dbBuffer);
+                    if (carvedFromDb.length > 0) {
+                        result.push(...carvedFromDb);
+                        log(`Raw byte carving directly from DioCache.db: ${carvedFromDb.length} JSON payload(s) recovered despite an empty or failed query.`);
+                    }
                 }
             } else {
                 log("No DioCache.db provided; carving rows from sidecar file(s) only.");
