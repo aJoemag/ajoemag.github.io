@@ -1608,6 +1608,12 @@
             if (payload.entity_type !== undefined) {
                 return true;
             }
+            if (payload.type !== undefined) {
+                if (payload.type == "poster") {
+                    return false;
+                }
+                return true;
+            }
 
             return false;
         }
@@ -1727,6 +1733,7 @@
                 if (!deinterleaved) {
                     return [];
                 }
+                // console.log(new TextDecoder().decode(deinterleaved)); // keep
 
                 const fileLabel = file.downloadName || file.name || 'journal';
                 log(`Journal deinterleave in ${fileLabel}: ${file.buffer.length - deinterleaved.length} bytes removed`);
@@ -1818,6 +1825,10 @@
 
             function insert_or_update_show(show) {
                 const id = show["id"];
+                if (show["watched_episode_count"] === undefined) {
+                    console.log("insert_or_update_show: wrong data input", show, shows[id]);
+                    log(`Warning: insert_or_update_show: wrong data input for show ${id}`);
+                }
                 if (!(id in shows) || ((show.watched_episode_count ?? 0) > (shows[id].watched_episode_count ?? 0)) || ((show.aired_episode_count ?? 0) > (shows[id].aired_episode_count ?? 0))) {
                     // newer, insert or update
                     shows[id] = shows[id] ?? {};
@@ -1867,6 +1878,10 @@
             function insert_or_update_show_from_list(show) {
                 const id = show.meta?.id;
                 if (!id) return;
+                if (show.filter === undefined || show.sorting === undefined) {
+                    console.log("insert_or_update_show_from_list: wrong data input", show, shows[id]);
+                    log(`Warning: insert_or_update_show_from_list: wrong data input for show ${id}`);
+                }
                 shows[id] = shows[id] ?? {};
                 shows[id]["id"] = shows[id]["id"] ?? show.meta?.id;
                 shows[id]["name"] = shows[id]["name"] ?? show.meta?.name;
@@ -1894,6 +1909,10 @@
 
             function insert_or_update_movie(movie) {
                 const id = movie["uuid"];
+                if (movie.watched_at === undefined) {
+                    console.log("insert_or_update_movie: wrong data input", movie, movies[id]);
+                    log(`Warning: insert_or_update_movie: wrong data input for movie ${id}`)
+                }
                 movies[id] = movies[id] ?? {};
                 movies[id]["imdb_id"] = movie.meta?.imdb_id ?? movies[id]["imdb_id"];
                 movies[id]["name"] = movie.meta?.name ?? movies[id]["name"];
@@ -1908,6 +1927,10 @@
 
             function insert_or_update_towatch_movie(movie) {
                 const id = movie["uuid"];
+                if (movie.created_at === undefined) {
+                    console.log("insert_or_update_towatch_movie: wrong data input", movie, towatch_movies[id]);
+                    log(`Warning: insert_or_update_towatch_movie: wrong data input for to-watch movie ${id}`)
+                }
                 towatch_movies[id] = towatch_movies[id] ?? {};
                 towatch_movies[id]["imdb_id"] = movie.meta?.imdb_id ?? towatch_movies[id]["imdb_id"];
                 towatch_movies[id]["name"] = movie.meta?.name ?? towatch_movies[id]["name"];
@@ -1918,6 +1941,31 @@
                     if (val.source == "tvdb") towatch_movies[id]["tvdb_id"] = towatch_movies[id]["tvdb_id"] ?? val.id;
                 })
             }
+            function insert_or_update_list_element(element) {
+
+                if (element.type == "series") {
+                    if (element.watch_status?.is_followed) {
+                        const id = element.id;
+                        const show = element;
+                        if (!id) return;
+                        shows[id] = shows[id] ?? {};
+                        shows[id]["id"] = shows[id]["id"] ?? show.id;
+                        shows[id]["name"] = shows[id]["name"] ?? show.name;
+                        shows[id]["poster"] = shows[id]["poster"] ?? show.poster;
+                        shows[id]["watched_episode_count"] = shows[id]["watched_episode_count"] ?? show.watch_status?.watched_episode_count;
+                        shows[id]["aired_episode_count"] = shows[id]["aired_episode_count"] ?? show.watch_status?.aired_episode_count;
+                        shows[id]["status"] = shows[id]["status"] ?? show.status;
+                        shows[id]["is_followed"] = shows[id]["is_followed"] ?? show.watch_status?.is_followed;
+                        shows[id]["is_up_to_date"] = shows[id]["is_up_to_date"] ?? show.watch_status?.is_up_to_date;
+                        shows[id]["is_archived"] = shows[id]["is_archived"] ?? show.watch_status?.is_archived;
+                        shows[id]["is_for_later"] = shows[id]["is_for_later"] ?? show.watch_status?.is_for_later;
+                        shows[id]["is_favorite"] = shows[id]["is_favorite"] ?? show.watch_status?.is_favorite;
+                    }
+                } else {
+                    console.log("insert_or_update_list_element: unsupported element type", element);
+                    log(`Warning: insert_or_update_list_element: unsupported element type ${element.type} for element ${element.id}`);
+                }
+            }
 
             function insert_or_update_list(list) {
                 const id = list["id"];
@@ -1925,28 +1973,10 @@
                 if (lists[id] === undefined || updated_at > lists[id]["updated_at"]) {
                     lists[id] = list;
                     // list contains name: string, posters: string[], created_at: string, objects: list of movies and series
-
                     list.objects?.forEach(element => {
-                        if (element.type == "series") {
-                            if (element.watch_status?.is_followed) {
-                                const id = element.id;
-                                const show = element;
-                                if (!id) return;
-                                shows[id] = shows[id] ?? {};
-                                shows[id]["id"] = shows[id]["id"] ?? show.id;
-                                shows[id]["name"] = shows[id]["name"] ?? show.name;
-                                shows[id]["poster"] = shows[id]["poster"] ?? show.poster;
-                                shows[id]["watched_episode_count"] = shows[id]["watched_episode_count"] ?? show.watch_status?.watched_episode_count;
-                                shows[id]["aired_episode_count"] = shows[id]["aired_episode_count"] ?? show.watch_status?.aired_episode_count;
-                                shows[id]["status"] = shows[id]["status"] ?? show.status;
-                                shows[id]["is_followed"] = shows[id]["is_followed"] ?? show.watch_status?.is_followed;
-                                shows[id]["is_up_to_date"] = shows[id]["is_up_to_date"] ?? show.watch_status?.is_up_to_date;
-                                shows[id]["is_archived"] = shows[id]["is_archived"] ?? show.watch_status?.is_archived;
-                                shows[id]["is_for_later"] = shows[id]["is_for_later"] ?? show.watch_status?.is_for_later;
-                                shows[id]["is_favorite"] = shows[id]["is_favorite"] ?? show.watch_status?.is_favorite;
-                            }
-                        }
+                        insert_or_update_list_element(element);
                     });
+
                 }
             }
 
@@ -1992,65 +2022,53 @@
 
 
             }
-            for (const row of result) {
+            function extract_data_from_row(data) {
                 try {
-                    // console.log(row)
-                    const data = JSON.parse(displayVal = new TextDecoder().decode(row))
-                    if ("follower_count" in data) {
+                    if (data["status"] == "success" && data["data"]) {
+                        data = data["data"];
+                    }
+                    if ("follower_count" in data && data["type"] === undefined) {
+                        // console.log("user data", data)
                         user["follower_count"] = data["follower_count"];
                         user["name"] = data["name"];
                         user["id"] = data["id"];
-                    } else if ("following_count" in data) {
+                    } else if ("following_count" in data && data["type"] === undefined) {
+                        // console.log("user data", data)
                         user["following_count"] = data["following_count"];
                         user["name"] = data["name"];
                         user["id"] = data["id"];
+
                     } else if ("shows" in data) {
                         for (const show of data["shows"]) {
                             insert_or_update_show(show);
                         }
-                    } else if ("status" in data) {
-                        if (data["status"] == "success") {
-                            if (data["data"] && data["data"].type == "list" && data["data"]["objects"] !== null) {
-                                if (!data["data"]["id"]) {
-                                    for (let entity of data["data"]["objects"]) {
-                                        if (entity["entity_type"] == "movie" && entity["type"] == "follow") {
-                                            if (entity["watched_at"]) {
-                                                insert_or_update_movie(entity);
-                                            } else {
-                                                insert_or_update_towatch_movie(entity)
-                                            }
-                                        } else if (entity["entity_type"] == "movie" && entity["type"] == "towatch") {
-                                            insert_or_update_towatch_movie(entity)
-                                        } else if (entity["entity_type"] == "series" && entity["type"] == "follow") {
-                                            insert_or_update_show_from_list(entity)
-                                        }
-                                    }
-                                } else {
-                                    insert_or_update_list(data["data"]);
 
-
-                                }
-                            } else if (data["data"] && data["data"].type == "watch") {
-                                for (let entity of data["data"]["objects"]) {
-                                    if (entity["entity_type"] == "movie" && entity["type"] == "watch") {
-                                        insert_or_update_movie(entity);
-                                    }
-                                }
-                            } else if (data["data"] && data["data"][0]?.type == "list") {
-                                for (let entity of data["data"]) {
-                                    if (entity["type"] == "list") {
-                                        insert_or_update_list(entity);
-                                    }
-                                }
+                    } else if (data.type == "list") {
+                        if (!data["id"]) {
+                            for (let entity of data["objects"]) {
+                                extract_data_from_row(entity);
+                            }
+                        } else {
+                            insert_or_update_list(data);
+                        }
+                    } else if (data.type == "watch" && Array.isArray(data["objects"])) {
+                        for (let entity of data["objects"]) {
+                            if (entity["entity_type"] == "movie" && entity["type"] == "watch") {
+                                insert_or_update_movie(entity);
                             }
                         }
-                    } else if (data[0]?.show?.id) {
-                        data.forEach(episode => {
-                            // console.log(episode)
-                            insert_or_update_episode(episode);
+                    } else if (Array.isArray(data)) {
+                        data.forEach(element => {
+                            extract_data_from_row(element);
                         });
-                    } else if (data["season_number"] !== undefined && data["number"] !== undefined && data["show"]?.id) {
+                    } else if (data["number"] !== undefined && data["show"]?.id) {
                         insert_or_update_episode(data);
+                    } else if (data["entity_type"] == "movie" && data["type"] == "follow") {
+                        if (data["watched_at"]) {
+                            insert_or_update_movie(data);
+                        } else {
+                            insert_or_update_towatch_movie(data)
+                        }
                     } else if (data["entity_type"] == "movie" && data["type"] == "towatch") {
                         insert_or_update_towatch_movie(data)
                     } else if (data["entity_type"] == "series" && data["type"] == "follow") {
@@ -2058,12 +2076,39 @@
                         insert_or_update_show_from_list(data)
                     } else if (data["entity_type"] == "movie" && data["type"] == "watch") {
                         insert_or_update_movie(data);
+                    } else if (data["custom_order"] !== undefined) {
+                        // console.log("list_element", data)
+                        insert_or_update_list_element(data);
+                    } else if (data["app_installed_time"] !== undefined ||// app settings
+                        data.type == "group" || // goups
+                        data.type == "media_card" || // media card
+                        data.campaign_type == "anticipation" || // anticipation
+                        data.avatar !== undefined || // user profile
+                        data.shows_filtering !== undefined || // user settings
+                        (data["status"] === "success" && data["data"] === null) ||  // empty success response
+                        (data["entity_type"] === "episode" && data.type == "source") || // video source, not useful
+                        (data["entity_type"] === "movie" && data.type == "source") || // video source, not useful
+                        (data["type"] === "fanart") || // fanart, not useful
+                        (data["type"] === "external_source") || // fanart, not useful
+                        (data["type"] === "movie") || // movie meta, does not contain useful info
+                        (data["type"] === "series" && data["watch_status"] === undefined) || // does not contain useful info
+                        (data["type"] === "franchise") ||
+                        (data["type"] === "trailer") ||
+                        (data["type"] === undefined && data["compatibility_rating"] !== undefined) || // recommendation, does not contain useful info
+                        (data["entity_type"] === "") // empty type, not useful
+                    ) {
+                        // ignore, not useful
+                    } else {
+                        console.log("unhandled row", data)
                     }
                 } catch (e) {
-                    console.log(e, new TextDecoder().decode(row[0]))
+                    console.log(e, data)
                     log(e)
-                    continue;
                 }
+            }
+            for (const row of result) {
+                let data = JSON.parse(displayVal = new TextDecoder().decode(row))
+                extract_data_from_row(data);
             }
             log("parsed all data")
             console.log(shows);
@@ -2076,7 +2121,8 @@
 
     </script>
 
-    <footer style="margin: 2rem auto; max-width: 1600px; padding: 0 1rem; text-align: center; font-size: 0.85rem; color: #777;">
+    <footer
+        style="margin: 2rem auto; max-width: 1600px; padding: 0 1rem; text-align: center; font-size: 0.85rem; color: #777;">
         <p>
             This page was created with the help of AI. The code may be considered public domain and used freely.
         </p>
