@@ -1189,6 +1189,9 @@
                         if (usedKeys.has(key)) {
                             continue;
                         }
+                        if (Number(apiEpisode?.season ?? 0) === 0) {
+                            continue; // specials aren't counted in watched_episode_count
+                        }
 
                         rows.push({
                             trakt_id: apiEpisode?.ids?.trakt ?? '',
