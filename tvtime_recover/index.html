@@ -383,24 +383,87 @@
                 <div id="downloadFileButtons"
                     style="display: none; flex-wrap: wrap; align-items: center; gap: 0.75rem;"></div>
             </div>
-            <div id="exportButtonsRow" style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
-                <button id="downloadSeriesCsvBtn" type="button"
-                    style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
-                    Trakt CSV (Series)</button>
-                <button id="downloadMoviesCsvBtn" type="button"
-                    style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
-                    Trakt CSV (Movies)</button>
-                <button id="downloadEpisodesCsvBtn" type="button"
-                    style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #7c3aed; color: white; cursor: pointer; font-weight: 600;">Download
-                    Trakt CSV (Episodes)</button>
+            <div id="gdprExportSection"
+                style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem;">
+                <div style="font-weight: 600; font-size: 0.85rem; color: #475569;">GDPR-style CSV ZIP Export (Beta)
+                </div>
+                <div id="gdprExportButtonsRow"
+                    style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.75rem;">
+                    <div id="downloadGdprZipWrap"
+                        style="display: none; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                        <button id="downloadGdprZipBtn" type="button"
+                            style="padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #085761; color: white; cursor: pointer; font-weight: 600;">Download
+                            GDPR-style Data ZIP <span
+                                style="margin-left: 0.35rem; padding: 0.12rem 0.4rem; border-radius: 999px; background: #dc2626; color: white; font-size: 0.7rem; font-weight: 700;">NEW</span></button>
+                        <span style="font-size: 0.75rem; font-weight: 600; color: #92400e;">⏱️ Fetches episodes from
+                            TheTVDB - can take a few minutes</span>
+                    </div>
+                </div>
             </div>
-            <div id="exportHint" style="display: inline-block;">Importable into <a
-                    href="https://app.trakt.tv/settings/data?source=trakt-csv&mode=media" target="_blank">Trakt</a>
-            </div>
-            <div id="episodesWarning"
-                style="display: none; align-items: center; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 0.92rem; font-weight: 600; border: 1px solid #fde68a;">
-                ⚠️ <span>The <strong>Episodes CSV</strong> export may take a few minutes to complete as it will fetch
-                    episode information from Trakt.</span></div>
+            <details
+                style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; margin-top: 0.15rem;">
+                <summary style="cursor: pointer; font-weight: 600; font-size: 0.85rem; color: #475569;">Other export
+                    options</summary>
+                <div
+                    style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; margin-top: 0.5rem;">
+                    <div id="refractExportSection"
+                        style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem;">
+                        <div style="font-weight: 600; font-size: 0.85rem; color: #475569;">Refract JSON Export</div>
+                        <div id="refractExportButtonsRow"
+                            style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.75rem;">
+                            <button id="downloadMoviesJsonBtn" type="button"
+                                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #0369a1; color: white; cursor: pointer; font-weight: 600;">Download
+                                Refract JSON (Movies)</button>
+
+                            <button id="downloadListsJsonBtn" type="button"
+                                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #0369a1; color: white; cursor: pointer; font-weight: 600;">Download
+                                Refract JSON (Lists)</button>
+                            <div id="downloadSeriesJsonWrap"
+                                style="display: none; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                                <button id="downloadSeriesJsonBtn" type="button"
+                                    style="padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #0369a1; color: white; cursor: pointer; font-weight: 600;">Download
+                                    Refract JSON (Series)</button>
+                                <span style="font-size: 0.75rem; font-weight: 600; color: #92400e;">⏱️ Fetches
+                                    episodes from TheTVDB - can take a few minutes</span>
+                            </div>
+                        </div>
+                        <div id="refractHint"
+                            style="display: none; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; border-radius: 999px; background: #f0f9ff; color: #334155; font-size: 0.85rem; font-weight: 600; border: 1px solid #bae6fd;">
+                            🔗 <span>Importable into</span>
+                            <a href="https://getrefract.app/" target="_blank" rel="noopener noreferrer"
+                                style="padding: 0.15rem 0.65rem; border-radius: 999px; background: #0369a1; color: white; font-weight: 700; text-decoration: none;">Refract</a>
+                        </div>
+                    </div>
+                    <div id="traktExportSection"
+                        style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem;">
+                        <div style="font-weight: 600; font-size: 0.85rem; color: #475569;">Trakt CSV Export</div>
+                        <div id="traktExportButtonsRow"
+                            style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.75rem;">
+                            <button id="downloadSeriesCsvBtn" type="button"
+                                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
+                                Trakt CSV (Series)</button>
+                            <button id="downloadMoviesCsvBtn" type="button"
+                                style="display: none; padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Download
+                                Trakt CSV (Movies)</button>
+                            <div id="downloadEpisodesCsvWrap"
+                                style="display: none; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                                <button id="downloadEpisodesCsvBtn" type="button"
+                                    style="padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #7c3aed; color: white; cursor: pointer; font-weight: 600;">Download
+                                    Trakt CSV (Episodes)</button>
+                                <span style="font-size: 0.75rem; font-weight: 600; color: #92400e;">⏱️ Fetches
+                                    episodes from TheTVDB - can take a few minutes</span>
+                            </div>
+                        </div>
+                        <div id="exportHint"
+                            style="display: none; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; border-radius: 999px; background: #eff6ff; color: #334155; font-size: 0.85rem; font-weight: 600; border: 1px solid #bfdbfe;">
+                            🔗 <span>Importable into</span>
+                            <a href="https://app.trakt.tv/settings/data?source=trakt-csv&mode=media" target="_blank"
+                                rel="noopener noreferrer"
+                                style="padding: 0.15rem 0.65rem; border-radius: 999px; background: #2563eb; color: white; font-weight: 700; text-decoration: none;">Trakt</a>
+                        </div>
+                    </div>
+                </div>
+            </details>
             <div id="exportWarning" class="warning"
                 style="display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.6rem 0.75rem; border-radius: 999px; background: #fef2f2; color: #b91c1c; font-size: 0.92rem; font-weight: 600; border: 1px solid #fecaca; line-height: 1.4;">
                 ⚠️ <span>Warning: this exports are best-effort only and may be incomplete or inaccurate.</span>
@@ -417,14 +480,23 @@
         const fileInput = document.getElementById('fileInput');
         const fileInputWrapper = document.getElementById('fileInputWrapper');
         const downloadSeriesCsvBtn = document.getElementById('downloadSeriesCsvBtn');
+        const downloadSeriesJsonBtn = document.getElementById('downloadSeriesJsonBtn');
         const downloadMoviesCsvBtn = document.getElementById('downloadMoviesCsvBtn');
+        const downloadMoviesJsonBtn = document.getElementById('downloadMoviesJsonBtn');
+        const downloadListsJsonBtn = document.getElementById('downloadListsJsonBtn');
         const downloadEpisodesCsvBtn = document.getElementById('downloadEpisodesCsvBtn');
+        const downloadEpisodesCsvWrap = document.getElementById('downloadEpisodesCsvWrap');
+        const downloadSeriesJsonWrap = document.getElementById('downloadSeriesJsonWrap');
+        const downloadGdprZipBtn = document.getElementById('downloadGdprZipBtn');
+        const downloadGdprZipWrap = document.getElementById('downloadGdprZipWrap');
+        const gdprExportSection = document.getElementById('gdprExportSection');
         const downloadTarBtn = document.getElementById('downloadTarBtn');
         const downloadFileButtons = document.getElementById('downloadFileButtons');
-        const exportButtonsRow = document.getElementById('exportButtonsRow');
+        const traktExportSection = document.getElementById('traktExportSection');
+        const refractExportSection = document.getElementById('refractExportSection');
         const exportHint = document.getElementById('exportHint');
+        const refractHint = document.getElementById('refractHint');
         const downloadBox = document.getElementById('downloadBox');
-        const episodesWarning = document.getElementById('episodesWarning');
         const exportWarning = document.getElementById('exportWarning');
         let exportData = null;
         let extractedTarBuffer = null;
@@ -432,6 +504,9 @@
         let extractedHomeWidgetJsonRows = [];
         let cachedEpisodeRows = null;
         let cachedEpisodeCsv = null;
+        let cachedSeriesJson = null;
+        let moviesCatalogPromise = null;
+        const tvdbShowDataCache = new Map();
 
         function log(msg) {
             statusEl.textContent += msg + '\n';
@@ -1022,69 +1097,255 @@
             downloadCsvFile(movies, 'movie', 'trakt-movies.csv');
         }
 
+        function toIsoDateNoMillis(value) {
+            const iso = toIsoDate(value);
+            return iso ? iso.replace(/\.\d{3}Z$/, 'Z') : '';
+        }
+
+        function isFavoriteMovie(lists, movieUuid) {
+            const favoritesList = lists?.["favorite-movies"];
+            if (!favoritesList || !Array.isArray(favoritesList.objects)) {
+                return false;
+            }
+            return favoritesList.objects.some(obj => obj?.uuid === movieUuid);
+        }
+
+        function buildRefractMoviesJson(movies, towatchMovies, lists) {
+            const combined = { ...(movies || {}), ...(towatchMovies || {}) };
+            return Object.entries(combined).map(([uuid, movie]) => ({
+                id: { tvdb: movie.tvdb_id ?? null, imdb: movie.imdb_id ?? null },
+                uuid,
+                created_at: movie.added_at ? toIsoDateNoMillis(movie.added_at) : null,
+                title: movie.name ?? null,
+                year: null,
+                watched_at: movie.watched_at ? toIsoDateNoMillis(movie.watched_at) : null,
+                is_watched: Boolean(movie.watched_at),
+                is_favorite: isFavoriteMovie(lists, uuid),
+                rewatch_count: movie.rewatch_count ?? 0
+            }));
+        }
+
+        function downloadMoviesJson() {
+            if (!exportData) {
+                return;
+            }
+            const rows = buildRefractMoviesJson(exportData.movies, exportData.towatchMovies, exportData.lists);
+            if (rows.length === 0) {
+                alert('No importable data was found to export for this category.');
+                return;
+            }
+            const dateStamp = '2026-07-15'; // TVTime shutdown date
+            const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `tvtime-movies-${dateStamp}.json`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function buildRefractListsJson(lists) {
+            return Object.values(lists || {}).map(list => ({
+                id: list.id ?? null,
+                name: list.name ?? null,
+                description: list.description ?? '',
+                is_public: list.is_public ?? false,
+                created_at: list.created_at ? toIsoDateNoMillis(list.created_at) : null,
+                items: (list.objects ?? []).map((obj, idx) => {
+                    if (obj.type === 'series') {
+                        return { type: 'series', tvdb_id: obj.id ?? null, name: obj.name ?? null, custom_order: obj.custom_order ?? idx };
+                    }
+                    return { type: 'movie', uuid: obj.uuid ?? null, name: obj.name ?? null, custom_order: obj.custom_order ?? idx };
+                })
+            }));
+        }
+
+        function downloadListsJson() {
+            if (!exportData) {
+                return;
+            }
+            const rows = buildRefractListsJson(exportData.lists);
+            if (rows.length === 0) {
+                alert('No importable data was found to export for this category.');
+                return;
+            }
+            const dateStamp = '2026-07-15'; // TVTime shutdown date
+            const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `tvtime-lists-${dateStamp}.json`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        async function fetchTraktJson(url, onProgress, attempt = 1, startedAt = Date.now(), totalMaxWaitMs = 10 * 60 * 1000) {
+        function hasKnownMovieName(movie) {
+            const rawName = movie?.name;
+            if (typeof rawName !== 'string') {
+                return false;
+            }
+
+            const normalizedName = rawName.trim();
+            if (!normalizedName) {
+                return false;
+            }
+
+            return normalizedName.toLowerCase() !== 'unknown movie';
+        }
+
+        async function loadMoviesCatalog() {
+            if (!moviesCatalogPromise) {
+                moviesCatalogPromise = (async () => {
+                    try {
+                        const response = await fetch('./movies.json', { cache: 'no-store' });
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
+                        const payload = await response.json();
+                        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+                            throw new Error('movies.json does not contain an object map.');
+                        }
+
+                        return payload;
+                    } catch (err) {
+                        log(`Could not load ./movies.json for movie name recovery: ${err.message}`);
+                        return {};
+                    }
+                })();
+            }
+
+            return moviesCatalogPromise;
+        }
+
+        async function hydrateMissingMoviesFromCatalog(movies) {
+            const missingEntries = Object.entries(movies || {}).filter(([, movie]) => !hasKnownMovieName(movie));
+            if (missingEntries.length === 0) {
+                return;
+            }
+
+            log(`Found ${missingEntries.length} movie(s) with unknown names. Loading ./movies.json...`);
+
+            const catalog = await loadMoviesCatalog();
+            let recoveredCount = 0;
+
+            for (const [uuid, movie] of missingEntries) {
+                const info = catalog?.[uuid];
+                if (!info || typeof info !== 'object') {
+                    continue;
+                }
+
+                movie.name = hasKnownMovieName(movie) ? movie.name : info.name ?? movie.name;
+                movie.first_release_date = movie.first_release_date ?? info.first_release_date;
+                movie.imdb_id = movie.imdb_id ?? info.imdb_id;
+                movie.tvdb_id = movie.tvdb_id ?? info.tvdb_id;
+                movie.poster = movie.poster ?? info.poster;
+
+                if (hasKnownMovieName(movie)) {
+                    recoveredCount += 1;
+                }
+            }
+
+            log(`Recovered metadata for ${recoveredCount}/${missingEntries.length} unknown movie(s) using ./movies.json.`);
+        }
+
+        const TVDB_API_KEY = '3373b4ce-edae-472f-90bd-8600d4f396c3';
+        let tvdbTokenPromise = null;
+
+        // Logs in to TheTVDB v4 API and caches the bearer token for reuse; call with forceRefresh to re-authenticate.
+        function getTvdbToken(forceRefresh = false) {
+            if (!tvdbTokenPromise || forceRefresh) {
+                tvdbTokenPromise = (async () => {
+                    const response = await fetch('https://api4.thetvdb.com/v4/login', {
+                        method: 'POST',
+                        headers: { 'accept': 'application/json', 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ apikey: TVDB_API_KEY })
+                    });
+                    if (!response.ok) {
+                        throw new Error(`TheTVDB login failed with status ${response.status}`);
+                    }
+                    const payload = await response.json();
+                    const token = payload?.data?.token;
+                    if (!token) {
+                        throw new Error('TheTVDB login did not return a token.');
+                    }
+                    return token;
+                })();
+            }
+            return tvdbTokenPromise;
+        }
+
+        async function fetchTvdbJson(url, onProgress, attempt = 1, startedAt = Date.now(), totalMaxWaitMs = 10 * 60 * 1000) {
             try {
+                const token = await getTvdbToken();
                 const response = await fetch(url, {
                     headers: {
-                        'User-Agent': 'tvtimerecover/1.0',
                         'accept': 'application/json',
-                        'trakt-api-key': 'sncgJnp5KW32NIxCYVypkXAhfwZgkfcfOeNy29iZr0I',
-                        'trakt-api-version': '2'
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
+                if (response.status === 401 && attempt === 1) {
+                    await getTvdbToken(true);
+                    return fetchTvdbJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
+                }
+
                 if (response.status === 429) {
                     const retryAfterHeader = response.headers.get('retry-after');
-                    const baseWaitSeconds = retryAfterHeader ? Number(retryAfterHeader) : 300;
+                    const baseWaitSeconds = retryAfterHeader ? Number(retryAfterHeader) : 30;
                     const waitSeconds = baseWaitSeconds;
-                    const message = `Rate limited by Trakt — waiting ${waitSeconds}s`;
+                    const message = `Rate limited by TheTVDB — waiting ${waitSeconds}s`;
                     onProgress?.(message);
                     log(message);
                     if (Date.now() - startedAt > totalMaxWaitMs) {
-                        throw new Error('Trakt API rate limit exceeded and the total wait budget has been reached.');
+                        throw new Error('TheTVDB API rate limit exceeded and the total wait budget has been reached.');
                     }
                     await sleep((waitSeconds + 1) * 1000);
                     if (attempt >= 10) {
-                        throw new Error('Trakt API rate limit exceeded after several retries.');
+                        throw new Error('TheTVDB API rate limit exceeded after several retries.');
                     }
-                    return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
+                    return fetchTvdbJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
                 }
 
                 if (!response.ok) {
                     const text = await response.text().catch(() => '');
                     const detail = text ? `: ${text}` : '';
-                    const retryable = response.status >= 500 || response.status === 403;
+                    const retryable = response.status >= 500;
                     if (retryable && attempt < 10) {
-                        const waitSeconds = 300;
-                        const message = `Trakt request failed with status ${response.status}${detail} — retrying in ${waitSeconds}s`;
+                        const waitSeconds = 30;
+                        const message = `TheTVDB request failed with status ${response.status}${detail} — retrying in ${waitSeconds}s`;
                         onProgress?.(message);
                         log(message);
                         if (Date.now() - startedAt > totalMaxWaitMs) {
-                            throw new Error('Trakt request retries exceeded the total wait budget.');
+                            throw new Error('TheTVDB request retries exceeded the total wait budget.');
                         }
                         await sleep((waitSeconds + 1) * 1000);
-                        return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
+                        return fetchTvdbJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
                     }
-                    throw new Error(`Trakt API request failed with status ${response.status}${detail}`);
+                    throw new Error(`TheTVDB API request failed with status ${response.status}${detail}`);
                 }
 
                 return response.json();
             } catch (err) {
                 const isNetworkFailure = err?.name === 'TypeError' || err?.message === 'Failed to fetch';
                 if (isNetworkFailure && attempt < 10) {
-                    const waitSeconds = 300;
-                    const message = `Trakt request failed (${err.message}) — retrying in ${waitSeconds}s`;
+                    const waitSeconds = 30;
+                    const message = `TheTVDB request failed (${err.message}) — retrying in ${waitSeconds}s`;
                     onProgress?.(message);
                     log(message);
                     if (Date.now() - startedAt > totalMaxWaitMs) {
-                        throw new Error('Trakt request retries exceeded the total wait budget.');
+                        throw new Error('TheTVDB request retries exceeded the total wait budget.');
                     }
                     await sleep((waitSeconds + 1) * 1000);
-                    return fetchTraktJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
+                    return fetchTvdbJson(url, onProgress, attempt + 1, startedAt, totalMaxWaitMs);
                 }
                 throw err;
             }
@@ -1097,23 +1358,19 @@
             if (show?.last_watched) {
                 return toIsoDate(show.last_watched);
             }
-            if (apiEpisode?.first_aired) {
-                return toIsoDate(apiEpisode.first_aired);
+            if (apiEpisode?.aired) {
+                return toIsoDate(apiEpisode.aired);
             }
             return '';
         }
 
-        async function buildEpisodeRowsForShow(show, onProgress) {
-            const watchedEpisodeCount = Number(show?.watched_episode_count ?? 0);
-            if (!watchedEpisodeCount) {
-                return [];
-            }
-
-            const localSeenEpisodes = Object.values(show?.episodes || {})
-                .filter(Boolean)
-                .filter(episode => episode?.seen === true)
-                .map(episode => ({
+        function getLocalWatchedEpisodes(show) {
+            return Object.entries(show?.episodes || {})
+                .filter(([, episode]) => Boolean(episode))
+                .filter(([, episode]) => (episode?.nb_times_watched ?? 0) > 0 || episode?.seen_date instanceof Date)
+                .map(([episodeId, episode]) => ({
                     ...episode,
+                    localEpisodeId: episodeId,
                     seasonNumber: Number(episode?.season_number ?? 0),
                     episodeNumber: Number(episode?.number ?? 0)
                 }))
@@ -1122,6 +1379,170 @@
                     if (a.episodeNumber !== b.episodeNumber) return a.episodeNumber - b.episodeNumber;
                     return String(a.name || '').localeCompare(String(b.name || ''));
                 });
+        }
+
+        // Fetches (and caches) episode data from TheTVDB once per show, shared by the episode CSV and series JSON exports.
+        function fetchTvdbShowData(tvdbId, showName, onProgress) {
+            if (tvdbShowDataCache.has(tvdbId)) {
+                return tvdbShowDataCache.get(tvdbId);
+            }
+
+            const dataPromise = (async () => {
+                try {
+                    onProgress?.(`Looking up ${showName} on TheTVDB...`);
+                    const seriesData = await fetchTvdbJson(`https://api4.thetvdb.com/v4/series/${encodeURIComponent(tvdbId)}/extended?meta=episodes&short=true`, onProgress);
+                    const series = seriesData?.data;
+                    if (!series) {
+                        return null;
+                    }
+                    const imdbId = series?.remoteIds?.find(remote => remote?.sourceName === 'IMDB')?.id ?? null;
+
+                    const seasonMap = new Map();
+                    for (const episode of series?.episodes || []) {
+                        if (episode?.isMovie) {
+                            continue; // linked movies aren't part of the numbered episode list
+                        }
+                        const seasonNumber = Number(episode?.seasonNumber ?? 0);
+                        if (!seasonMap.has(seasonNumber)) {
+                            seasonMap.set(seasonNumber, []);
+                        }
+                        seasonMap.get(seasonNumber).push({ ...episode, season: seasonNumber });
+                    }
+
+                    const seasonList = Array.from(seasonMap.entries())
+                        .sort(([a], [b]) => a - b)
+                        .map(([number, episodes]) => ({ number, episodes }));
+
+                    return { imdbId, seasons: seasonList };
+                } catch (err) {
+                    const message = `TheTVDB lookup failed for ${showName}: ${err?.message || err}`;
+                    console.warn(message, err);
+                    log(message);
+                    return null;
+                }
+            })();
+
+            tvdbShowDataCache.set(tvdbId, dataPromise);
+            return dataPromise;
+        }
+
+        function flattenTvdbEpisodes(tvdbData) {
+            const apiEpisodes = [];
+            for (const season of tvdbData.seasons) {
+                apiEpisodes.push(...(season.episodes || []));
+            }
+            apiEpisodes.sort((a, b) => {
+                if (Number(a?.season ?? 0) !== Number(b?.season ?? 0)) return Number(a?.season ?? 0) - Number(b?.season ?? 0);
+                return Number(a?.number ?? 0) - Number(b?.number ?? 0);
+            });
+            return apiEpisodes;
+        }
+
+        // Matches local watched episodes to TheTVDB episodes, then fills any remaining slots (up to watchedEpisodeCount)
+        // sequentially with unmatched non-special episodes. Shared by the episode CSV and series JSON exports.
+        function computeWatchedEpisodeAssignments(tvdbData, localWatchedEpisodes, watchedEpisodeCount, show) {
+            const assignments = new Map();
+
+
+            if (!tvdbData) {
+                return assignments;
+            }
+
+            const apiEpisodes = flattenTvdbEpisodes(tvdbData);
+
+            // add locally known episodes
+            for (const localEpisode of localWatchedEpisodes.slice(0, watchedEpisodeCount)) {
+                const key = `${localEpisode.seasonNumber}-${localEpisode.episodeNumber}`;
+                if (assignments.has(key)) {
+                    continue;
+                }
+                const apiEpisode = apiEpisodes.find(candidate =>
+                    Number(candidate?.season ?? 0) === localEpisode.seasonNumber &&
+                    Number(candidate?.number ?? 0) === localEpisode.episodeNumber
+                );
+                assignments.set(key, { localEpisode, apiEpisode });
+            }
+
+
+            if (show?.is_up_to_date) {
+                // we are up-to-date, so add all episodes that aired before the last-watched date
+                // it might be more episodes than the watched_episode_count if user skipped episodes but its the best we can do
+                const cutoffValue = show?.last_watched ?? '2026-07-15';
+                const cutoffDate = cutoffValue instanceof Date ? cutoffValue : new Date(cutoffValue);
+                for (const apiEpisode of apiEpisodes) {
+                    if (Number(apiEpisode?.season ?? 0) === 0) {
+                        continue; // specials aren't counted in watched_episode_count
+                    }
+                    const airedDate = apiEpisode?.aired ? new Date(apiEpisode.aired) : null;
+                    if (!airedDate || Number.isNaN(airedDate.getTime()) || airedDate > cutoffDate) {
+                        continue;
+                    }
+                    const key = `${Number(apiEpisode?.season ?? 0)}-${Number(apiEpisode?.number ?? 0)}`;
+                    const localEpisode = localWatchedEpisodes.find(candidate =>
+                        candidate.seasonNumber === Number(apiEpisode?.season ?? 0) &&
+                        candidate.episodeNumber === Number(apiEpisode?.number ?? 0)
+                    ) ?? null;
+                    assignments.set(key, { localEpisode, apiEpisode });
+                }
+                return assignments;
+            }
+
+            const hasKnownWatchedEpisodeCount = watchedEpisodeCount !== undefined && watchedEpisodeCount !== null && !Number.isNaN(Number(watchedEpisodeCount));
+            if (!hasKnownWatchedEpisodeCount) {
+                if (!show?.last_watched) {
+                    return assignments;
+                }
+                if (assignments.size > 0) {
+                    return assignments;
+                }
+                // we have seen at least one episode, add the first episode
+                // Unknown watch count but the show has a last-watched date - assume just the first episode was seen.
+                const firstEpisode = apiEpisodes.find(candidate => Number(candidate?.season ?? 0) !== 0);
+                if (firstEpisode) {
+                    const key = `${Number(firstEpisode?.season ?? 0)}-${Number(firstEpisode?.number ?? 0)}`;
+                    const localEpisode = localWatchedEpisodes.find(candidate =>
+                        candidate.seasonNumber === Number(firstEpisode?.season ?? 0) &&
+                        candidate.episodeNumber === Number(firstEpisode?.number ?? 0)
+                    ) ?? null;
+                    assignments.set(key, { localEpisode, apiEpisode: firstEpisode });
+                }
+                return assignments;
+            }
+
+            watchedEpisodeCount = Number(watchedEpisodeCount);
+            if (!watchedEpisodeCount) {
+                return assignments;
+            }
+
+
+            if (assignments.size < watchedEpisodeCount) {
+                for (const apiEpisode of apiEpisodes) {
+                    if (Number(apiEpisode?.season ?? 0) === 0) {
+                        continue; // specials aren't counted in watched_episode_count
+                    }
+
+                    const key = `${Number(apiEpisode?.season ?? 0)}-${Number(apiEpisode?.number ?? 0)}`;
+                    if (assignments.has(key)) {
+                        continue;
+                    }
+
+                    assignments.set(key, { localEpisode: null, apiEpisode });
+                    if (assignments.size >= watchedEpisodeCount) {
+                        break;
+                    }
+                }
+            }
+
+            return assignments;
+        }
+
+        async function buildEpisodeRowsForShow(show, onProgress) {
+            const watchedEpisodeCount = show?.watched_episode_count;
+            if (!watchedEpisodeCount && !show?.is_up_to_date && !show?.last_watched) {
+                return [];
+            }
+
+            const localWatchedEpisodes = getLocalWatchedEpisodes(show);
 
             const tvdbId = show?.tvdb_id ?? show?.id;
             if (!tvdbId) {
@@ -1130,79 +1551,18 @@
 
             try {
                 const showName = show?.name || 'show';
-                onProgress?.(`Looking up ${showName} on Trakt...`);
-                // log(`Episode export: looking up ${showName} on Trakt`);
-                const searchResults = await fetchTraktJson(`https://api.trakt.tv/search/tvdb/${encodeURIComponent(tvdbId)}`, onProgress);
-                const traktShowId = searchResults?.[0]?.show?.ids?.trakt;
-                if (!traktShowId) {
+                const tvdbData = await fetchTvdbShowData(tvdbId, showName, onProgress);
+                if (!tvdbData) {
                     return [];
                 }
 
-                const seasons = await fetchTraktJson(`https://api.trakt.tv/shows/${traktShowId}/seasons?extended=full`, onProgress);
-                const apiEpisodes = [];
-
-                for (const season of seasons || []) {
-                    const seasonNumber = season?.number;
-                    if (seasonNumber === undefined || seasonNumber === null) {
-                        continue;
-                    }
-
-                    const seasonEpisodes = await fetchTraktJson(`https://api.trakt.tv/shows/${traktShowId}/seasons/${seasonNumber}?extended=full`, onProgress);
-                    for (const episode of seasonEpisodes || []) {
-                        apiEpisodes.push({
-                            ...episode,
-                            season: Number(episode?.season ?? seasonNumber)
-                        });
-                    }
-                }
-
-                apiEpisodes.sort((a, b) => {
-                    if (Number(a?.season ?? 0) !== Number(b?.season ?? 0)) return Number(a?.season ?? 0) - Number(b?.season ?? 0);
-                    return Number(a?.number ?? 0) - Number(b?.number ?? 0);
-                });
-
+                const assignments = computeWatchedEpisodeAssignments(tvdbData, localWatchedEpisodes, watchedEpisodeCount, show);
                 const rows = [];
-                const usedKeys = new Set();
-
-                for (const localEpisode of localSeenEpisodes.slice(0, watchedEpisodeCount)) {
-                    const apiEpisode = apiEpisodes.find(candidate =>
-                        Number(candidate?.season ?? 0) === Number(localEpisode?.seasonNumber ?? 0) &&
-                        Number(candidate?.number ?? 0) === Number(localEpisode?.episodeNumber ?? 0)
-                    );
-
-                    const key = `${Number(localEpisode?.seasonNumber ?? 0)}-${Number(localEpisode?.episodeNumber ?? 0)}`;
-                    if (usedKeys.has(key)) {
-                        continue;
-                    }
-
-                    const estimatedWatchedAt = estimateEpisodeWatchedAt(localEpisode, show, apiEpisode);
-                    usedKeys.add(key);
+                for (const { localEpisode, apiEpisode } of assignments.values()) {
                     rows.push({
-                        trakt_id: apiEpisode?.ids?.trakt ?? '',
-                        watched_at: estimatedWatchedAt
+                        tvdb_id: apiEpisode?.id ?? '',
+                        watched_at: estimateEpisodeWatchedAt(localEpisode, show, apiEpisode)
                     });
-                }
-
-                if (rows.length < watchedEpisodeCount) {
-                    for (const apiEpisode of apiEpisodes) {
-                        const key = `${Number(apiEpisode?.season ?? 0)}-${Number(apiEpisode?.number ?? 0)}`;
-                        if (usedKeys.has(key)) {
-                            continue;
-                        }
-                        if (Number(apiEpisode?.season ?? 0) === 0) {
-                            continue; // specials aren't counted in watched_episode_count
-                        }
-
-                        rows.push({
-                            trakt_id: apiEpisode?.ids?.trakt ?? '',
-                            watched_at: estimateEpisodeWatchedAt(null, show, apiEpisode)
-                        });
-
-                        usedKeys.add(key);
-                        if (rows.length >= watchedEpisodeCount) {
-                            break;
-                        }
-                    }
                 }
 
                 return rows;
@@ -1260,9 +1620,9 @@
                 cachedEpisodeRows = rows;
                 log(`Episode export succeeded: ${rows.length} episode row(s) prepared`);
 
-                const csvLines = ['trakt_id,type,watched_at'];
+                const csvLines = ['tvdb_id,type,watched_at'];
                 for (const row of rows) {
-                    csvLines.push(`${escapeCsv(row.trakt_id || '')},${escapeCsv('episode')},${escapeCsv(row.watched_at || '')}`);
+                    csvLines.push(`${escapeCsv(row.tvdb_id || '')},${escapeCsv('episode')},${escapeCsv(row.watched_at || '')}`);
                 }
 
                 cachedEpisodeCsv = csvLines.join('\n');
@@ -1286,9 +1646,1025 @@
             }
         }
 
+        function isTbaEpisodeTitle(title) {
+            return String(title ?? '').trim().toUpperCase() === 'TBA';
+        }
+
+
+        function buildRefractSeasonsForShow(show, tvdbData, localWatchedEpisodes, watchedEpisodeCount) {
+            if (!tvdbData) {
+                return [];
+            }
+
+            const assignments = computeWatchedEpisodeAssignments(tvdbData, localWatchedEpisodes, watchedEpisodeCount, show);
+
+            return tvdbData.seasons.map(season => ({
+                number: season.number,
+                is_specials: season.number === 0,
+                episodes: (season.episodes || [])
+                    .filter(ep => !isTbaEpisodeTitle(ep?.name))
+                    .map(ep => {
+                        const assignment = assignments.get(`${season.number}-${Number(ep?.number ?? 0)}`);
+                        const watchedCount = assignment?.localEpisode?.nb_times_watched ?? (assignment ? 1 : 0);
+                        return {
+                            id: { tvdb: ep?.id ?? null, imdb: null },
+                            number: ep?.number ?? null,
+                            name: ep?.name ?? null,
+                            special: season.number === 0,
+                            is_watched: Boolean(assignment),
+                            watched_at: assignment ? toIsoDateNoMillis(estimateEpisodeWatchedAt(assignment.localEpisode, show, ep)) : null,
+                            rewatch_count: Math.max(watchedCount - 1, 0),
+                            watched_count: watchedCount
+                        };
+                    })
+            }));
+        }
+        function isFavoriteSeries(lists, seriesId) {
+            const favoritesList = lists?.["favorite-series"];
+            if (!favoritesList || !Array.isArray(favoritesList.objects)) {
+                return false;
+            }
+            return favoritesList.objects.some(obj => obj?.id === seriesId);
+        }
+        async function buildRefractSeriesRows(shows, lists, onProgress) {
+            const rows = [];
+            for (let index = 0; index < shows.length; index += 1) {
+                const show = shows[index];
+                const showName = show?.name || `Show ${index + 1}`;
+                const watchedEpisodeCount = show?.watched_episode_count;
+                const hasKnownEpisodeCount = (watchedEpisodeCount !== undefined && watchedEpisodeCount !== null) || Boolean(show?.is_up_to_date) || Boolean(show?.last_watched);
+                const tvdbId = show?.tvdb_id ?? show?.id;
+                const localWatchedEpisodes = getLocalWatchedEpisodes(show);
+
+                let tvdbData = null;
+                if (hasKnownEpisodeCount && tvdbId) {
+                    onProgress?.(showName, index, shows.length);
+                    tvdbData = await fetchTvdbShowData(tvdbId, showName, (message) => onProgress?.(`${message}`, index, shows.length));
+                }
+
+                const noEpisodeData = !hasKnownEpisodeCount || !tvdbData;
+
+                rows.push({
+                    uuid: show?.uuid ?? null,
+                    id: { tvdb: show?.tvdb_id ?? show?.id ?? null, imdb: show?.imdb_id ?? tvdbData?.imdbId ?? null },
+                    created_at: show?.last_added ? toIsoDateNoMillis(show.last_added) : null,
+                    title: show?.name ?? null,
+                    status: show?.status ?? 'unknown',
+                    is_favorite: Boolean(show?.is_favorite) || isFavoriteSeries(lists, show?.id),
+                    _noEpisodeData: noEpisodeData,
+                    seasons: noEpisodeData ? [] : buildRefractSeasonsForShow(show, tvdbData, localWatchedEpisodes, watchedEpisodeCount)
+                });
+            }
+            return rows;
+        }
+
+        async function downloadSeriesJson() {
+            if (!exportData?.shows) {
+                return;
+            }
+
+            const dateStamp = '2026-07-15'; // TVTime shutdown date
+
+            if (cachedSeriesJson) {
+                log('Series export using cached JSON data');
+                const blob = new Blob([cachedSeriesJson], { type: 'application/json;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `tvtime-series-${dateStamp}.json`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                return;
+            }
+
+            const shows = Object.values(exportData.shows || {});
+            const totalShows = shows.length;
+
+            log(`Series JSON export started for ${totalShows} show(s)`);
+            downloadSeriesJsonBtn.disabled = true;
+            downloadSeriesJsonBtn.textContent = 'Preparing series export...';
+
+            try {
+                const rows = await buildRefractSeriesRows(shows, exportData.lists, (message, index, total) => {
+                    downloadSeriesJsonBtn.textContent = `${message} (${index + 1}/${total})`;
+                });
+
+                if (rows.length === 0) {
+                    log('Series JSON export finished with no rows exported');
+                    alert('No series data could be exported.');
+                    return;
+                }
+
+                cachedSeriesJson = JSON.stringify(rows, null, 2);
+                log(`Series JSON export succeeded: ${rows.length} show(s) prepared`);
+
+                const blob = new Blob([cachedSeriesJson], { type: 'application/json;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `tvtime-series-${dateStamp}.json`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                const message = `Series JSON export failed: ${err?.message || err}`;
+                log(message);
+                console.error(message, err);
+                alert(message);
+            } finally {
+                downloadSeriesJsonBtn.disabled = false;
+                downloadSeriesJsonBtn.textContent = 'Download Refract JSON (Series)';
+            }
+        }
+
+        function toGdprDateTime(value) {
+            const iso = toIsoDate(value);
+            return iso ? iso.replace('T', ' ').replace(/\.\d{3}Z$/, '').replace(/Z$/, '') : '';
+        }
+
+        function csvField(value) {
+            const str = String(value ?? '');
+            return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+        }
+
+        function buildCsvTable(columns, rows) {
+            const lines = [columns.join(',')];
+            for (const row of rows) {
+                lines.push(columns.map(column => csvField(row[column])).join(','));
+            }
+            return lines.join('\n') + '\n';
+        }
+
+        // Approximates Go's fmt %v float formatting (e.g. "1.719002748e+09") used by the original GDPR export.
+        function formatGoTimestamp(rawValue) {
+            let seconds = null;
+            if (typeof rawValue === 'number') {
+                seconds = rawValue;
+            } else if (rawValue instanceof Date) {
+                seconds = rawValue.getTime() / 1000;
+            } else if (typeof rawValue === 'string' && rawValue.trim()) {
+                const numeric = Number(rawValue);
+                seconds = Number.isNaN(numeric) ? new Date(rawValue).getTime() / 1000 : numeric;
+            }
+            if (seconds === null || Number.isNaN(seconds)) {
+                return '';
+            }
+            if (Number.isInteger(seconds) && seconds < 1e+6) {
+                return seconds.toString()
+            }
+            return seconds.toExponential(9).replace(/e\+(\d)$/, 'e+0$1');
+        }
+
+        // Recreates the "[map[created_at:... id:... type:... uuid:...]]" style field from the original lists CSV.
+        function formatGoObject(obj) {
+            if (obj === null || obj === undefined) {
+                return '<nil>';
+            } else if (typeof obj === 'string') {
+                return obj;
+            } else if (typeof obj === 'number') {
+                return formatGoTimestamp(obj);
+            } else if (obj instanceof Date) {
+                return formatGoTimestamp(obj);
+            } else if (Array.isArray(obj)) {
+                return `[${(obj).map(formatGoObject).join(' ')}]`;
+            } else if (typeof obj === 'object') {
+                return `map[${Object.keys(obj).sort().map(key => `${key}:${formatGoObject(obj[key])}`).join(' ')}]`;
+            } else {
+                return String(obj);
+            }
+        }
+
+        function crc32(bytes) {
+            let crc = 0xFFFFFFFF;
+            for (let i = 0; i < bytes.length; i += 1) {
+                crc ^= bytes[i];
+                for (let bit = 0; bit < 8; bit += 1) {
+                    crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1));
+                }
+            }
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        // Minimal store-only (uncompressed) ZIP writer, avoids pulling in an extra dependency just for this.
+        function buildZipBlob(entries) {
+            const encoder = new TextEncoder();
+            const now = new Date();
+            const dosTime = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xFFFF;
+            const dosDate = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xFFFF;
+
+            const localParts = [];
+            const centralParts = [];
+            let offset = 0;
+
+            for (const entry of entries) {
+                const nameBytes = encoder.encode(entry.name);
+                const data = entry.data;
+                const crc = crc32(data);
+                const size = data.length;
+
+                const localHeader = new Uint8Array(30 + nameBytes.length);
+                const lv = new DataView(localHeader.buffer);
+                lv.setUint32(0, 0x04034b50, true);
+                lv.setUint16(4, 20, true);
+                lv.setUint16(6, 0, true);
+                lv.setUint16(8, 0, true);
+                lv.setUint16(10, dosTime, true);
+                lv.setUint16(12, dosDate, true);
+                lv.setUint32(14, crc, true);
+                lv.setUint32(18, size, true);
+                lv.setUint32(22, size, true);
+                lv.setUint16(26, nameBytes.length, true);
+                lv.setUint16(28, 0, true);
+                localHeader.set(nameBytes, 30);
+                localParts.push(localHeader, data);
+
+                const centralHeader = new Uint8Array(46 + nameBytes.length);
+                const cv = new DataView(centralHeader.buffer);
+                cv.setUint32(0, 0x02014b50, true);
+                cv.setUint16(4, 20, true);
+                cv.setUint16(6, 20, true);
+                cv.setUint16(8, 0, true);
+                cv.setUint16(10, 0, true);
+                cv.setUint16(12, dosTime, true);
+                cv.setUint16(14, dosDate, true);
+                cv.setUint32(16, crc, true);
+                cv.setUint32(20, size, true);
+                cv.setUint32(24, size, true);
+                cv.setUint16(28, nameBytes.length, true);
+                cv.setUint16(30, 0, true);
+                cv.setUint16(32, 0, true);
+                cv.setUint16(34, 0, true);
+                cv.setUint16(36, 0, true);
+                cv.setUint32(38, 0, true);
+                cv.setUint32(42, offset, true);
+                centralHeader.set(nameBytes, 46);
+                centralParts.push(centralHeader);
+
+                offset += localHeader.length + data.length;
+            }
+
+            const centralOffset = offset;
+            const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+
+            const endRecord = new Uint8Array(22);
+            const ev = new DataView(endRecord.buffer);
+            ev.setUint32(0, 0x06054b50, true);
+            ev.setUint16(8, entries.length, true);
+            ev.setUint16(10, entries.length, true);
+            ev.setUint32(12, centralSize, true);
+            ev.setUint32(16, centralOffset, true);
+
+            return new Blob([...localParts, ...centralParts, endRecord], { type: 'application/zip' });
+        }
+
+        // Builds the row data for the GDPR-style CSVs, reusing the same shared TheTVDB cache/fill logic as the episode CSV and series JSON exports.
+        async function buildGdprExportData(shows, movies, towatchMovies, lists, user, onProgress) {
+            const userId = user?.id ?? 1337;
+
+
+            // tracking-prod-records-v2.csv
+            const trackingProdV2RecordsRows = [];
+            // X where-to-watch-prod-table.csv
+            // tracking-prod-records.csv
+            const trackingProdRecordsRows = [];
+            // X seen_episode_source.csv
+            // X ratings-3-prod-episode_votes.csv
+            // X user_connection.csv
+            // X comments-prod-comments.csv
+            // X show_character_episode_vote.csv
+            // X notifications-prod-notifications.csv
+            // X watched_on_episode.csv
+            // X emotions-v2-prod-votes.csv
+            // X emotions-3-prod-episode_votes.csv
+            // X ratings-v2-prod-votes.csv
+            // X user_badge.csv
+            // X ip_address.csv
+            // X recommendations-prod-user-scores.csv
+            // followed_tv_show.csv
+            const followedTVShowsRows = [];
+            // X tv_show_user_emotion_count.csv
+            // X episode_emotion.csv
+            // X ratings-prod-episode_votes.csv
+            // show_seen_episode_latest.csv last episode of each show seen by the user
+            const showSeenLatestRows = [];
+            // X episode_comment_like.csv
+            // show_addiction_score.csv
+            const showAddictionScoreRows = [];
+            // X stats-prod-cache.csv
+            // user_tv_show_data.csv
+            const userTVShowDataRows = [];
+            // followed_tv_show_source.csv
+            // X ratings-live-votes.csv
+            // X rewatched_episode.csv old data
+            // const rewatchedRows = [];
+            // X emotions-live-votes.csv
+            // X episode_comments_last_read_date.csv
+            // X device_data.csv
+            // user_setting.csv
+            const userSettingRows = [];
+            // install_tracking.csv
+            // X seen_episode_latest.csv only last few episodes
+            // X device_token.csv
+            // X webhook_data.csv
+            // X tracking-prod-count-by-timeframe.csv
+            // X user_session.csv
+            // X recommendations-prod-user-shows.csv
+            // lists-prod-lists.csv
+            let listsProdListsRows = [];
+            // user.csv
+            const userContent = `excluded_networks,twitter_oauth_token_secret,twitter_connect_time,default_diffusion,id,language,created_at,badge,tumblr_id,hash,tumblr_oauth_token_secret,device_token,notif_friend_join,notif_webseries_reco,version_number,tumblr_oauth_token,facebook_id,default_notification_offset,public_profile,nb_days_active,mail_status,fake_account,publish_on_twitter,notif_news,notif_webseries_new_video,newsletter_activated,nb_months_active,last_time_loaded_towatch,name,twitter_id,fb_expiration_date,timezone,fb_connect_time,password_new,fb_access_token,excluded_shows,last_opened,posted_on_wall,publish_on_ticker,twitter_oauth_token,nb_weeks_active,password,backward_days,automatic_account,mail,last_time_synced_drive,updated_at,last_updated
+,,0,,${userId},en,2020-07-15 00:00:00,0,,,,,1,1,10.10.0,,,0,1,0,1,0,0,1,1,1,0,0,${user.name ?? "Anonymous User"},,,Europe/London,0,$2y$10$QB/yC1NKGR6ldU3ya6bBi.eqlN995M59YKklZcUXPOfK4EDko5ImS,,,1783111849,0,1,,0,,1,0,user@example.com,0,2026-07-15 20:50:49,0
+`
+            // X ad_identifier.csv
+            // X installed_app.csv
+            // X user_device.csv
+            // X user_personal_data.csv
+            // X refresh_token.csv
+            // user_membership.csv
+            const userMembership = `user_id,updated_at,canceled,created_at,custom_data,gifted,membership_type,start_date,end_date
+${userId},2019-02-12 15:29:56,0,2019-02-12 15:29:56,,1,com.tozelabs.tvshowtime.plan.very_important_fan,2019-02-12 15:29:56 +0000 UTC,2019-03-12 15:29:56 +0000 UTC
+`
+            // X object_report.csv
+            // X user_poll.csv
+            // auth-prod-login.csv
+            const authProdLogin = `encrypted_secret,encrypted_token,hash_key,range_key,external_id,username,user_id,password_hash,email,provider
+,,user@example.com,tvtime:${user.name ?? "AnonymoutUser"},,${user.name ?? "AnonymoutUser"},${userId},$2y$10$QB/yC1NKGR6ldU3ya6bBi.eqlN995M59YKklZcUXPOfK4EDko5ImS,user@example.com,tvtime
+`
+            // user_show_special_status.csv
+            const userShowSpecialStatusRows = [];
+            // X user_mail_sent_status.csv
+            // user_statistics.csv
+            const total_ep_watch_count = Object.values(shows).reduce((sum, show) => sum + (Number(show?.watched_episode_count ?? 0)), 0);
+            const total_series_runtime = total_ep_watch_count * 26 * 60; // rough average of 26 minutes per episode
+            const total_series_follow_count = Object.values(shows).reduce((sum, show) => sum + (show?.is_followed ? 1 : 0), 0);
+            const total_movies_runtime = Object.values(movies || {}).reduce((sum, movie) => sum + (Number(movie?.runtime ?? 103 * 60)), 0);
+            const total_movie_watch_count = Object.values(movies || {}).length;
+            const userStatistics = `nb_likes,nb_shows_followed,nb_episodes_watched,nb_friends,user_id,updated_at,nb_memes,time_spent,nb_comments,nb_reviews,score,id,created_at
+0,${Object.values(shows).length},7,0,${userId},2026-07-15 10:34:33,0,${total_movies_runtime + total_series_runtime},0,0,0,${userId},2020-07-15 00:00:00
+`
+            // X tv_show_rate.csv outdated
+            // user_social_data.csv
+            const userSocialData = `birthday,user_id,screen_name,picture_url,created_at,updated_at,image_id,gender
+2000-01-01 00:00:00 +0000 UTC,${userId},${user.name ?? "Anonymous User"},,2020-07-15 00:00:00,2021-07-15 15:00:00,,male
+`
+            // X emotions-live-episode_votes.csv
+            // gdpr_requests.csv
+            const gdprRequests = `id,user_id,data_generated,locked,s3_key,source,created_at,updated_at,error_message
+1337,${userId},0,1,,self_service,2026-07-15 00:00:00,2026-07-15 00:00:00,
+`
+            // user_platform.csv
+            const userPlatform = `android_cnt,web_cnt,created_at,updated_at,user_id,registered_on,iphone_cnt,ipad_cnt
+1337,1337,2020-07-15 00:00:00,2025-07-15 18:00:00,${userId},android,1337,1337
+`
+            // X access_token.csv
+            // X _appsflyer_ids.csv
+            // X friend.csv no friends :(
+            // user_last_updated.csv
+            const userLastUpdated = `last_updated,created_at,updated_at,user_id\n1783107908,2020-07-15 00:00:00,2026-07-03 19:45:08,${userId}\n`
+            // tracking-deployment-prod-tracks.csv
+            const trackingDeploymentProdTracks = `user_id,created_at,day\n${userId},2023-08-24 10:29:28,new\n`
+
+
+            trackingProdV2RecordsRows.push({
+                series_name: "",
+                episode_number: "",
+                ep_no: "",
+                user_id: userId,
+                s_id: "",
+                runtime: "",
+                ep_id: "",
+                episode_id: "",
+                season_number: "",
+                gsi: "",
+                created_at: "2021-11-12 20:55:28",
+                s_no: "",
+                key: `tracking-stats`,
+                bulk_type: "",
+                ep_watch_count: total_ep_watch_count,
+                total_movies_runtime: total_movies_runtime,
+                series_follow_count: total_series_follow_count,
+                total_series_runtime: total_series_runtime,
+                updated_at: "2026-07-15 20:29:04",
+                movie_watch_count: total_movie_watch_count,
+                is_for_later: "",
+                is_followed: "",
+                uuid: "",
+                is_archived: "",
+                most_recent_ep_watched: "",
+                followed_at: "",
+                rewatch_count: "",
+                is_unitary: "",
+                is_special: ""
+            });
+
+
+            trackingProdRecordsRows.push({
+                created_at: "20.07.2021  01:02:49",
+                updated_at: toGdprDateTime(new Date()),
+                series_id: "",
+                watch_count: "",
+                type: "time-count",
+                user_id: userId,
+                series_name: "",
+                "type-uuid-n": `time-count`,
+                uuid: "",
+                watches: "",
+                follow_date_range_key: "",
+                entity_type: "",
+                movie_name: "",
+                runtime: "",
+                release_date: "",
+                alpha_range_key: "",
+                release_date_range_key: "",
+                rewatch_count: "",
+                episode_number: "",
+                episode_id: "",
+                season_number: "",
+                series_uuid: "",
+                watch_date: "",
+                total_series_runtime: total_series_runtime,
+                total_movies_runtime: total_movies_runtime,
+                country: "",
+                watch_date_range_key: "",
+                watched_episode_range_key: "",
+                unitarian: "",
+                bulk_type: ""
+            });
+
+
+            trackingProdRecordsRows.push({
+                created_at: "",
+                updated_at: "",
+                series_id: "",
+                watch_count: total_movie_watch_count,
+                type: "",
+                user_id: userId,
+                series_name: "",
+                "type-uuid-n": `count-watch-movie`,
+                uuid: "",
+                watches: "[]",
+                follow_date_range_key: "",
+                entity_type: "",
+                movie_name: "",
+                runtime: "",
+                release_date: "",
+                alpha_range_key: "",
+                release_date_range_key: "",
+                rewatch_count: "",
+                episode_number: "",
+                episode_id: "",
+                season_number: "",
+                series_uuid: "",
+                watch_date: "",
+                total_series_runtime: "",
+                total_movies_runtime: "",
+                country: "",
+                watch_date_range_key: "",
+                watched_episode_range_key: "",
+                unitarian: "",
+                bulk_type: ""
+            });
+
+
+            for (const [movieId, movie] of Object.entries(movies || {})) {
+                if (!movie?.name) {
+                    // Without a name, no service can match the movie as not imdb, tvdb, or tmdb id is exported.
+                    continue;
+                }
+                const movieName = movie?.name ?? `Movie ${movieId}`;
+                const watchedAt = movie?.watched_at ?? movie?.added_at ?? movie?.updated_at ?? new Date();
+                const updated_at = toGdprDateTime(movie?.updated_at ?? movie?.added_at ?? movie?.watched_at ?? new Date());
+                const created_at = movie?.added_at ?? movie?.watched_at ?? movie?.updated_at ?? new Date();
+                const slug = movieName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+                trackingProdRecordsRows.push({
+                    created_at: toGdprDateTime(created_at),
+                    updated_at: toGdprDateTime(created_at),
+                    series_id: "",
+                    watch_count: "",
+                    type: "follow",
+                    user_id: userId,
+                    series_name: "",
+                    "type-uuid-n": `follow-${movieId}-0`,
+                    uuid: movieId,
+                    watches: "",
+                    follow_date_range_key: `follow-follow-date-${Math.floor(created_at / 1000)}`,
+                    entity_type: "movie",
+                    movie_name: movieName,
+                    runtime: movie?.runtime ? movie?.runtime : "",
+                    release_date: toGdprDateTime(movie?.first_release_date ?? ""),
+                    alpha_range_key: `follow-alpha-` + slug,
+                    release_date_range_key: "follow-release-date-" + new Date(movie?.first_release_date ?? "1970-01-01").toISOString().split('T')[0],
+                    rewatch_count: movie?.rewatch_count ?? "",
+                    episode_number: "",
+                    episode_id: "",
+                    season_number: "",
+                    series_uuid: "",
+                    watch_date: "",
+                    total_series_runtime: "",
+                    total_movies_runtime: "",
+                    country: "",
+                    watch_date_range_key: "",
+                    watched_episode_range_key: "",
+                    unitarian: "",
+                    bulk_type: ""
+                });
+
+                trackingProdRecordsRows.push({
+                    created_at: toGdprDateTime(watchedAt),
+                    updated_at: toGdprDateTime(watchedAt),
+                    series_id: "",
+                    watch_count: "",
+                    type: "watch",
+                    user_id: userId,
+                    series_name: "",
+                    "type-uuid-n": `watch-${movieId}-0`,
+                    uuid: movieId,
+                    watches: "",
+                    follow_date_range_key: "",
+                    entity_type: "movie",
+                    movie_name: movieName,
+                    runtime: movie?.runtime ? movie?.runtime : "",
+                    release_date: toGdprDateTime(movie?.first_release_date ?? ""),
+                    alpha_range_key: `watch-alpha-` + slug,
+                    release_date_range_key: "watch-release-date-" + new Date(movie?.first_release_date ?? "1970-01-01").toISOString().split('T')[0],
+                    rewatch_count: "",
+                    episode_number: "",
+                    episode_id: "",
+                    season_number: "",
+                    series_uuid: "",
+                    watch_date: "",
+                    total_series_runtime: "",
+                    total_movies_runtime: "",
+                    country: "us",
+                    watch_date_range_key: "watch-date-" + Math.floor(watchedAt / 1000),
+                    watched_episode_range_key: "",
+                    unitarian: "",
+                    bulk_type: ""
+                });
+            }
+
+            for (const [movieId, movie] of Object.entries(towatchMovies || {})) {
+                if (!movie?.name) {
+                    // Without a name, no service can match the movie as not imdb, tvdb, or tmdb id is exported.
+                    continue;
+                }
+                const movieName = movie?.name ?? `Movie ${movieId}`;
+                const updated_at = toGdprDateTime(movie?.updated_at ?? movie?.added_at ?? movie?.watched_at ?? new Date());
+                const created_at = movie?.added_at ?? movie?.watched_at ?? movie?.updated_at ?? new Date();
+                const slug = movieName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+                trackingProdRecordsRows.push({
+                    created_at: toGdprDateTime(created_at),
+                    updated_at: updated_at,
+                    series_id: "",
+                    watch_count: "",
+                    type: "follow",
+                    user_id: userId,
+                    series_name: "",
+                    "type-uuid-n": `follow-${movieId}-0`,
+                    uuid: movieId,
+                    watches: "",
+                    follow_date_range_key: `follow-follow-date-${Math.floor(created_at / 1000)}`,
+                    entity_type: "movie",
+                    movie_name: movieName,
+                    runtime: movie?.runtime ?? "",
+                    release_date: toGdprDateTime(movie?.first_release_date ?? ""),
+                    alpha_range_key: `follow-alpha-` + slug,
+                    release_date_range_key: "follow-release-date-" + new Date(movie?.first_release_date ?? "1970-01-01").toISOString().split('T')[0],
+                    rewatch_count: movie?.rewatch_count ?? "0",
+                    episode_number: "",
+                    episode_id: "",
+                    season_number: "",
+                    series_uuid: "",
+                    watch_date: "",
+                    total_series_runtime: "",
+                    total_movies_runtime: "",
+                    country: "",
+                    watch_date_range_key: "",
+                    watched_episode_range_key: "",
+                    unitarian: "",
+                    bulk_type: ""
+                });
+
+                trackingProdRecordsRows.push({
+                    created_at: toGdprDateTime(created_at),
+                    updated_at: updated_at,
+                    series_id: "",
+                    watch_count: "",
+                    type: "towatch",
+                    user_id: userId,
+                    series_name: "",
+                    "type-uuid-n": `towatch-${movieId}-0`,
+                    uuid: movieId,
+                    watches: "",
+                    follow_date_range_key: "",
+                    entity_type: "movie",
+                    movie_name: movieName,
+                    runtime: movie?.runtime ?? "",
+                    release_date: toGdprDateTime(movie?.first_release_date ?? ""),
+                    alpha_range_key: `watch-alpha-` + slug,
+                    release_date_range_key: "towatch-release-date-" + new Date(movie?.first_release_date ?? "1970-01-01").toISOString().split('T')[0],
+                    rewatch_count: movie?.rewatch_count ?? "0",
+                    episode_number: "",
+                    episode_id: "",
+                    season_number: "",
+                    series_uuid: "",
+                    watch_date: "",
+                    total_series_runtime: "",
+                    total_movies_runtime: "",
+                    country: "",
+                    watch_date_range_key: "",
+                    watched_episode_range_key: "",
+                    unitarian: "",
+                    bulk_type: ""
+                });
+            }
+            const numberOfShows = Object.values(shows || {}).length;
+            for (const [index, show] of Object.values(shows || {}).entries()) {
+                const showName = show?.name || `Show ${index + 1}`;
+                const tvShowId = show?.tvdb_id ?? show?.id ?? '';
+                const watchedEpisodeCount = show?.watched_episode_count;
+                const hasKnownEpisodeCount = watchedEpisodeCount !== undefined && watchedEpisodeCount !== null;
+                const isFollowed = show?.is_followed ?? true;
+                const hasLastWatched = Boolean(show?.last_watched);
+                let uuid = show?.uuid ?? show?._uuid;
+                if (!uuid) {
+                    // generate random
+                    uuid = crypto.randomUUID();
+                    show._uuid = uuid;
+                }
+
+                followedTVShowsRows.push({
+                    active: isFollowed ? 1 : 0,
+                    diffusion: 'original',
+                    archived: show?.is_archived ? 1 : 0,
+                    updated_at: toGdprDateTime(show?.updated_at ?? show?.last_watched ?? show?.last_added ?? show?.created_at ?? new Date()),
+                    notification_type: 2,
+                    folder_id: '',
+                    notification_offset: 0,
+                    tv_show_name: showName,
+                    user_id: userId,
+                    tv_show_id: tvShowId,
+                    created_at: toGdprDateTime(show?.created_at ?? show?.updated_at ?? show?.last_added ?? show?.last_watched ?? new Date())
+                });
+
+                userTVShowDataRows.push({
+                    tv_show_name: showName,
+                    user_id: userId,
+                    tv_show_id: tvShowId,
+                    is_followed: isFollowed ? 1 : 0,
+                    is_favorited: (Boolean(show?.is_favorite) || isFavoriteSeries(lists, show?.id)) ? 1 : 0,
+                    nb_episodes_seen: hasKnownEpisodeCount ? Number(watchedEpisodeCount) : 0
+                });
+
+                const trackingProdV2RecordsRowsEntry = {
+                    series_name: showName,
+                    episode_number: "",
+                    ep_no: "",
+                    user_id: userId,
+                    s_id: tvShowId,
+                    runtime: "",
+                    ep_id: "",
+                    episode_id: "",
+                    season_number: "",
+                    gsi: "",
+                    created_at: toGdprDateTime(show?.created_at ?? show?.updated_at ?? show?.last_added ?? show?.last_watched ?? new Date()),
+                    s_no: "",
+                    key: `user-series-${uuid}`,
+                    bulk_type: "",
+                    ep_watch_count: show?.watched_episode_count ?? "",
+                    total_movies_runtime: "",
+                    series_follow_count: "",
+                    total_series_runtime: "",
+                    updated_at: toGdprDateTime(show?.updated_at ?? show?.last_watched ?? show?.last_added ?? show?.created_at ?? new Date()),
+                    movie_watch_count: "",
+                    is_for_later: show?.is_for_later ?? false,
+                    is_followed: isFollowed,
+                    uuid: uuid,
+                    is_archived: show?.is_archived ?? false,
+                    most_recent_ep_watched: "", // TODO
+                    followed_at: Math.floor(new Date(show?.created_at ?? show?.updated_at ?? show?.last_added ?? show?.last_watched) / 1000),
+                    rewatch_count: "",
+                    is_unitary: "",
+                    is_special: ""
+                }
+                trackingProdV2RecordsRows.push(trackingProdV2RecordsRowsEntry);
+
+                showAddictionScoreRows.push({
+                    monthly_score: 100,
+                    tv_show_name: showName,
+                    user_id: userId,
+                    tv_show_id: tvShowId,
+                    last_action_timestamp: Math.floor(new Date(show?.updated_at ?? show?.last_watched ?? show?.last_added ?? show?.created_at ?? new Date()) / 1000),
+                    daily_score: 100,
+                    weekly_score: 100
+                });
+
+                if (show?.is_for_later) {
+                    userShowSpecialStatusRows.push({
+                        user_id: userId,
+                        tv_show_id: tvShowId,
+                        status: "for_later",
+                        created_at: toGdprDateTime(show?.updated_at ?? show?.last_watched ?? show?.last_added ?? show?.created_at ?? new Date()),
+                        updated_at: toGdprDateTime(show?.updated_at ?? show?.last_watched ?? show?.last_added ?? show?.created_at ?? new Date()),
+                        tv_show_name: showName
+                    });
+                }
+
+                if ((!hasKnownEpisodeCount && !hasLastWatched) || !tvShowId) {
+                    continue;
+                }
+
+                const localWatchedEpisodes = getLocalWatchedEpisodes(show);
+                onProgress?.(showName, index, numberOfShows);
+                const tvdbData = await fetchTvdbShowData(tvShowId, showName, (message) => onProgress?.(message, index, numberOfShows));
+                if (!tvdbData) {
+                    continue;
+                }
+
+                const assignmentList = Array.from(computeWatchedEpisodeAssignments(tvdbData, localWatchedEpisodes, watchedEpisodeCount, show).values());
+                const flattenedEpisodes = assignmentList.map(({ localEpisode, apiEpisode }) => ({
+                    seasonNumber: localEpisode?.seasonNumber ?? Number(apiEpisode?.season ?? 0),
+                    episodeNumber: localEpisode?.episodeNumber ?? Number(apiEpisode?.number ?? 0),
+                    episodeId: localEpisode?.localEpisodeId ?? apiEpisode?.id ?? '',
+                    watchedAt: (estimateEpisodeWatchedAt(localEpisode, show, apiEpisode)),
+                    rewatchCount: Math.max((localEpisode?.nb_times_watched ?? 0) - 1, 0),
+                }));
+
+                for (const episode of flattenedEpisodes) {
+                    const episodeUuid = crypto.randomUUID();
+                    const watchTimestamp = new Date(episode.watchedAt).getTime() / 1000;
+                    trackingProdV2RecordsRows.push({
+                        series_name: showName,
+                        episode_number: episode.episodeNumber,
+                        ep_no: episode.episodeNumber,
+                        user_id: userId,
+                        s_id: tvShowId,
+                        runtime: 1500,
+                        ep_id: episode.episodeId,
+                        episode_id: episode.episodeId,
+                        season_number: episode.seasonNumber,
+                        gsi: `watch-episode-${watchTimestamp}`,
+                        created_at: toGdprDateTime(episode.watchedAt),
+                        s_no: episode.seasonNumber,
+                        key: `watch-episode-${uuid}-${episodeUuid}`,
+                        bulk_type: "",
+                        ep_watch_count: "",
+                        total_movies_runtime: "",
+                        series_follow_count: "",
+                        total_series_runtime: "",
+                        updated_at: toGdprDateTime(episode.watchedAt),
+                        movie_watch_count: "",
+                        is_for_later: "",
+                        is_followed: "",
+                        uuid: "",
+                        is_archived: "",
+                        most_recent_ep_watched: "",
+                        followed_at: "",
+                        rewatch_count: (episode.rewatchCount ?? ""),
+                        is_unitary: "true",
+                        is_special: episode.seasonNumber === 0 ? "true" : ""
+                    });
+
+
+                    if (episode.rewatchCount > 0) {
+                        for (let rewatchIndex = 0; rewatchIndex < episode.rewatchCount; rewatchIndex += 1) {
+                            const newWatchedAt = new Date(new Date(episode.watchedAt).getTime() + 1000 * 60 * 60 * 24 * (rewatchIndex + 1)); // add 1 day to avoid duplicate timestamps
+                            const newWatchTimestamp = newWatchedAt.getTime() / 1000;
+                            trackingProdV2RecordsRows.push({
+                                series_name: showName,
+                                episode_number: episode.episodeNumber,
+                                ep_no: episode.episodeNumber,
+                                user_id: userId,
+                                s_id: tvShowId,
+                                runtime: 1500,
+                                ep_id: episode.episodeId,
+                                episode_id: episode.episodeId,
+                                season_number: episode.seasonNumber,
+                                gsi: `watch-episode-${newWatchTimestamp}`,
+                                created_at: toGdprDateTime(newWatchedAt),
+                                s_no: episode.seasonNumber,
+                                key: `rewatch-episode-${uuid}-${episodeUuid}-${rewatchIndex + 1}`,
+                                bulk_type: "",
+                                ep_watch_count: "",
+                                total_movies_runtime: "",
+                                series_follow_count: "",
+                                total_series_runtime: "",
+                                updated_at: "",
+                                movie_watch_count: "",
+                                is_for_later: "",
+                                is_followed: "",
+                                uuid: "",
+                                is_archived: "",
+                                most_recent_ep_watched: "",
+                                followed_at: "",
+                                rewatch_count: "",
+                                is_unitary: "",
+                                is_special: ""
+                            });
+                        }
+                    }
+
+                }
+
+                const latestEpisode = [...flattenedEpisodes].sort((a, b) => (a.seasonNumber - b.seasonNumber) || (a.episodeNumber - b.episodeNumber)).pop();
+                if (latestEpisode) {
+                    showSeenLatestRows.push({
+                        tv_show_id: tvShowId,
+                        episode_id: latestEpisode.episodeId,
+                        created_at: toGdprDateTime(latestEpisode.watchedAt),
+                        updated_at: toGdprDateTime(latestEpisode.watchedAt),
+                        tv_show_name: showName,
+                        user_id: userId
+                    });
+                    trackingProdV2RecordsRowsEntry.most_recent_ep_watched = formatGoObject({
+                        ep_id: latestEpisode.episodeId,
+                        ep_no: latestEpisode.episodeNumber,
+                        s_no: latestEpisode.seasonNumber,
+                        uuid: crypto.randomUUID(),
+                        watch_date: Math.floor(new Date(latestEpisode.watchedAt) / 1)
+
+                    });
+                }
+            }
+
+            listsProdListsRows = Object.values(lists || {})
+                .filter(list => list?.id && Array.isArray(list?.objects))
+                .map(list => ({
+                    is_public: list.is_public ?? 'false',
+                    description: list.description ?? '',
+                    user_id: userId,
+                    created_at: toGdprDateTime(Date(list.created_at)),
+                    objects: formatGoObject(list.objects.map(obj => ({
+                        created_at: new Date(obj?.created_at),
+                        id: obj?.id ?? '',
+                        type: obj?.type ?? '',
+                        uuid: obj?.uuid ?? ''
+                    }))),
+                    s_key: list.id,
+                    ordering: 0,
+                    type: 'list',
+                    name: list.name ?? '',
+                    lists: ''
+                }));
+
+            listsProdListsRows.push({
+                is_public: '',
+                description: '',
+                user_id: userId,
+                created_at: "",
+                objects: "",
+                s_key: 'collection',
+                ordering: "",
+                type: "",
+                name: "",
+                lists: formatGoObject(Object.values(lists || {}).filter(list => list?.id && Array.isArray(list?.objects)).map(list => ({
+                    created_at: new Date(list.created_at),
+                    description: null,
+                    fanart: [],
+                    is_public: list.is_public ?? 'false',
+                    name: list.name ?? '',
+                    order: null,
+                    posters: list.posters ?? [],
+                    s_key: list.id ?? '',
+                    type: 'list',
+                    updated_at: new Date(list.updated_at ?? list.created_at ?? new Date()),
+                    user_id: Number(userId),
+                })))
+            });
+
+            function pushIntoUserSettingRows(key, value) {
+                userSettingRows.push({
+                    id: Math.floor(Math.random() * 1000000),
+                    user_id: userId,
+                    name: key,
+                    value: value,
+                    created_at: "2026-07-15 01:02:49",
+                    updated_at: "2026-07-15 01:02:49"
+                });
+            }
+            pushIntoUserSettingRows("latest-version", "smart-categories-v2");
+            pushIntoUserSettingRows("signup_reason", "init:0");
+            pushIntoUserSettingRows("signup-hint", "faster-setup");
+            pushIntoUserSettingRows("signup-hint-color", "#8ed43d");
+            pushIntoUserSettingRows("show_skip_signup", "1");
+            pushIntoUserSettingRows("profile_giftbox_hint_min_days", "9");
+            pushIntoUserSettingRows("profile_giftbox_hint_style", "popover");
+            pushIntoUserSettingRows("profile_giftbox_popover_type", "1");
+            pushIntoUserSettingRows("profile_giftbox_popover_text", "3");
+            pushIntoUserSettingRows("profile_giftbox_popover_text_color", "#ffffff");
+            pushIntoUserSettingRows("profile_giftbox_popover_bg_color", "#8ed43d");
+            pushIntoUserSettingRows("auto_share_cta_style", "1");
+            pushIntoUserSettingRows("last_time_loaded_conversations", "2026-07-15 01:02:49");
+            pushIntoUserSettingRows("last_notifications_key", `{"time":{"N":"1693590511494"},"user_id":{"N":"${userId}"},"last_notification_id":{"N":"0"}}`);
+            pushIntoUserSettingRows("last_time_loaded_notifications", "2026-07-03 19:52:17");
+            pushIntoUserSettingRows("last_time_loaded_new_feed", "2026-07-03 19:52:17");
+            pushIntoUserSettingRows("last_time_loaded_new_feed", "2018-11-29 14:05:47");
+            pushIntoUserSettingRows("profile_categories_order", `[{"hidden":false,"id":"all_time_favorites"},{"hidden":false,"id":"watch_next"},{"hidden":false,"id":"not_watched_for_a_while"},{"hidden":false,"id":"not_started_yet"},{"hidden":false,"id":"for_later"},{"hidden":false,"id":"upcoming"},{"hidden":false,"id":"up_to_date"},{"hidden":false,"id":"finished"},{"hidden":false,"id":"stopped_watching"}]`);
+            pushIntoUserSettingRows("locale", "en");
+            pushIntoUserSettingRows("show_personal_info_screen_in_onboarding", "0");
+            pushIntoUserSettingRows("last_reco_time_first_element_loaded-recommended", "2019-01-18 15:24:56");
+            pushIntoUserSettingRows("last_reco_time_first_element_loaded-trending", "2019-06-15 13:13:48");
+            pushIntoUserSettingRows("last_explore_change_action_time", "2026-07-15 01:02:49");
+            pushIntoUserSettingRows("last_time_loaded_explore", "2019-01-18 15:24:56");
+            pushIntoUserSettingRows("recommended_toasts_seen_show_ids", "[]");
+            pushIntoUserSettingRows("notifications_friend_comments", "0");
+            pushIntoUserSettingRows("profile_privacy", "public");
+            pushIntoUserSettingRows("is_tracked_on_apptimize", "1");
+            pushIntoUserSettingRows("appsflyer_device_id", "111111111111-111111111111111111");
+            pushIntoUserSettingRows("shown_movies_announcement_modal", "1");
+            pushIntoUserSettingRows("is_using_dark_mode", "1");
+            pushIntoUserSettingRows("is_tracked_on_appboy", "1");
+            pushIntoUserSettingRows("os", `{"platform":"android","version":""33"}`);
+            pushIntoUserSettingRows("notifications_comment_likes", "1");
+            pushIntoUserSettingRows("notifications_friend_invites", "1");
+            pushIntoUserSettingRows("notifications_badge_unlocks", "1");
+            pushIntoUserSettingRows("notifications_news_and_articles", "1");
+            pushIntoUserSettingRows("marketing_opt_in", "subscribed");
+            pushIntoUserSettingRows("is_valid_age", "1");
+            pushIntoUserSettingRows("show_ids_in_onboarding", "[]");
+
+            return { trackingProdV2RecordsRows, trackingProdRecordsRows, followedTVShowsRows, showSeenLatestRows, showAddictionScoreRows, userTVShowDataRows, userSettingRows, listsProdListsRows, userContent, userMembership, authProdLogin, userShowSpecialStatusRows, userStatistics, userSocialData, gdprRequests, userPlatform, userLastUpdated, trackingDeploymentProdTracks };
+        }
+
+        async function downloadGdprZip() {
+            if (!exportData?.shows) {
+                return;
+            }
+            const totalShows = Object.values(exportData?.shows).length;
+
+            log(`GDPR-style ZIP export started for ${totalShows} show(s)`);
+            downloadGdprZipBtn.disabled = true;
+            downloadGdprZipBtn.textContent = 'Preparing GDPR-style export...';
+
+            try {
+                const data = await buildGdprExportData(exportData.shows, exportData.movies, exportData.towatchMovies, exportData.lists, exportData.user, (message, index, total) => {
+                    downloadGdprZipBtn.textContent = `${message} (${index + 1}/${total})`;
+                });
+
+                const tables = [
+                    { name: 'tracking-prod-records-v2.csv', columns: ['series_name', 'episode_number', 'ep_no', 'user_id', 's_id', 'runtime', 'ep_id', 'episode_id', 'season_number', 'gsi', 'created_at', 's_no', 'key', 'bulk_type', 'ep_watch_count', 'total_movies_runtime', 'series_follow_count', 'total_series_runtime', 'updated_at', 'movie_watch_count', 'is_for_later', 'is_followed', 'uuid', 'is_archived', 'most_recent_ep_watched', 'followed_at', 'rewatch_count', 'is_unitary', 'is_special'], rows: data.trackingProdV2RecordsRows },
+                    { name: 'tracking-prod-records.csv', columns: ['created_at', 'updated_at', 'series_id', 'watch_count', 'type', 'user_id', 'series_name', 'type-uuid-n', 'uuid', 'watches', 'follow_date_range_key', 'entity_type', 'movie_name', 'runtime', 'release_date', 'alpha_range_key', 'release_date_range_key', 'rewatch_count', 'episode_number', 'episode_id', 'season_number', 'series_uuid', 'watch_date', 'total_series_runtime', 'total_movies_runtime', 'country', 'watch_date_range_key', 'watched_episode_range_key', 'unitarian', 'bulk_type'], rows: data.trackingProdRecordsRows },
+                    { name: 'followed_tv_show.csv', columns: ['active', 'diffusion', 'archived', 'updated_at', 'notification_type', 'folder_id', 'notification_offset', 'tv_show_name', 'user_id', 'tv_show_id', 'created_at'], rows: data.followedTVShowsRows },
+                    { name: 'show_seen_episode_latest.csv', columns: ['tv_show_id', 'episode_id', 'created_at', 'updated_at', 'tv_show_name', 'user_id'], rows: data.showSeenLatestRows },
+                    { name: 'show_addiction_score.csv', columns: ['monthly_score', 'tv_show_name', 'user_id', 'tv_show_id', 'last_action_timestamp', 'daily_score', 'weekly_score'], rows: data.showAddictionScoreRows },
+                    { name: 'user_tv_show_data.csv', columns: ['tv_show_name', 'user_id', 'tv_show_id', 'is_followed', 'is_favorited', 'nb_episodes_seen'], rows: data.userTVShowDataRows },
+                    { name: 'lists-prod-lists.csv', columns: ['is_public', 'description', 'user_id', 'created_at', 'objects', 's_key', 'ordering', 'type', 'name', 'lists'], rows: data.listsProdListsRows },
+                    { name: 'user_show_special_status.csv', columns: ['user_id', 'tv_show_id', 'status', 'created_at', 'updated_at', 'tv_show_name'], rows: data.userShowSpecialStatusRows }
+                ];
+
+                const totalRows = tables.reduce((sum, table) => sum + table.rows.length, 0);
+                if (totalRows === 0) {
+                    log('GDPR-style ZIP export finished with no rows exported');
+                    alert('No exportable data was found for the GDPR-style ZIP.');
+                    return;
+                }
+
+                const encoder = new TextEncoder();
+                const entries = tables.filter(table => table.rows.length > 0).map(table => ({ name: table.name, data: encoder.encode(buildCsvTable(table.columns, table.rows)) }));
+                entries.push({ name: 'user.csv', data: encoder.encode(data.userContent) });
+                entries.push({ name: 'user_membership.csv', data: encoder.encode(data.userMembership) });
+                entries.push({ name: 'auth-prod-login.csv', data: encoder.encode(data.authProdLogin) });
+                entries.push({ name: 'user_statistics.csv', data: encoder.encode(data.userStatistics) });
+                entries.push({ name: 'user_social_data.csv', data: encoder.encode(data.userSocialData) });
+                entries.push({ name: 'gdpr_requests.csv', data: encoder.encode(data.gdprRequests) });
+                entries.push({ name: 'user_platform.csv', data: encoder.encode(data.userPlatform) });
+                entries.push({ name: 'user_last_updated.csv', data: encoder.encode(data.userLastUpdated) });
+                entries.push({ name: 'tracking-deployment-prod-tracks.csv', data: encoder.encode(data.trackingDeploymentProdTracks) });
+                log(`GDPR-style ZIP export succeeded: ${totalRows} row(s) across ${entries.length} file(s) prepared`);
+
+                const blob = buildZipBlob(entries);
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `tvtime-gdpr-data.zip`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                const message = `GDPR-style ZIP export failed: ${err?.message || err}`;
+                log(message);
+                console.error(message);
+                console.log(err);
+                alert(message);
+            } finally {
+                downloadGdprZipBtn.disabled = false;
+                downloadGdprZipBtn.textContent = 'Download GDPR-style Data ZIP';
+            }
+        }
+
         downloadSeriesCsvBtn.addEventListener('click', downloadSeriesCsv);
+        downloadSeriesJsonBtn.addEventListener('click', downloadSeriesJson);
         downloadMoviesCsvBtn.addEventListener('click', downloadMoviesCsv);
+        downloadMoviesJsonBtn.addEventListener('click', downloadMoviesJson);
+        downloadListsJsonBtn.addEventListener('click', downloadListsJson);
         downloadEpisodesCsvBtn.addEventListener('click', downloadEpisodesCsv);
+        downloadGdprZipBtn.addEventListener('click', downloadGdprZip);
 
         function renderCards(title, items, cardRenderer, sectionId) {
             if (!items || items.length === 0) {
@@ -1362,21 +2738,32 @@
         }
 
         function renderResults(shows, movies, towatchMovies, user, lists) {
-            exportData = { shows, movies, towatchMovies };
+            exportData = { shows, movies, towatchMovies, lists, user };
             cachedEpisodeRows = null;
             cachedEpisodeCsv = null;
+            cachedSeriesJson = null;
             const hasSeries = shows && Object.keys(shows).length > 0;
             const hasMovies = (movies && Object.keys(movies).length > 0) || (towatchMovies && Object.keys(towatchMovies).length > 0);
+            const hasLists = lists && Object.keys(lists).length > 0;
             const hasRecoveredMedia = hasSeries || hasMovies;
             const hasEpisodeExports = Object.values(shows || {}).some(show => Number(show?.watched_episode_count ?? 0) > 0);
             const hasSourceDownloads = extractedCacheFiles.length > 0 || downloadTarBtn.style.display !== 'none';
             const hasExportDownloads = hasSeries || hasMovies || hasEpisodeExports;
+            const hasTraktExports = hasSeries || hasMovies || hasEpisodeExports;
+            const hasRefractExports = hasSeries || hasMovies || hasLists;
+            const hasGdprExports = hasSeries || hasMovies || hasLists;
             downloadSeriesCsvBtn.style.display = hasSeries ? 'inline-block' : 'none';
+            downloadSeriesJsonWrap.style.display = hasSeries ? 'flex' : 'none';
             downloadMoviesCsvBtn.style.display = hasMovies ? 'inline-block' : 'none';
-            downloadEpisodesCsvBtn.style.display = hasEpisodeExports ? 'inline-block' : 'none';
-            exportButtonsRow.style.display = hasExportDownloads ? 'flex' : 'none';
-            exportHint.style.display = hasExportDownloads ? 'inline-block' : 'none';
-            episodesWarning.style.display = hasEpisodeExports ? 'flex' : 'none';
+            downloadMoviesJsonBtn.style.display = hasMovies ? 'inline-block' : 'none';
+            downloadListsJsonBtn.style.display = hasLists ? 'inline-block' : 'none';
+            downloadEpisodesCsvWrap.style.display = hasEpisodeExports ? 'flex' : 'none';
+            downloadGdprZipWrap.style.display = hasGdprExports ? 'flex' : 'none';
+            traktExportSection.style.display = hasTraktExports ? 'flex' : 'none';
+            refractExportSection.style.display = hasRefractExports ? 'flex' : 'none';
+            gdprExportSection.style.display = hasGdprExports ? 'flex' : 'none';
+            exportHint.style.display = hasTraktExports ? 'flex' : 'none';
+            refractHint.style.display = hasRefractExports ? 'flex' : 'none';
             exportWarning.style.display = hasExportDownloads ? 'flex' : 'none';
             downloadBox.style.display = (hasRecoveredMedia || hasSourceDownloads) ? 'flex' : 'none';
 
@@ -1742,7 +3129,7 @@
                 log(`Journal deinterleave in ${fileLabel}: ${file.buffer.length - deinterleaved.length} bytes removed`);
 
                 const carvedFromDeinterleaved = carveJsonPayloadsFromBytes(deinterleaved);
-                console.log(carvedFromDeinterleaved.map(payload => JSON.parse(new TextDecoder().decode(payload)))); // keep
+                // console.log(carvedFromDeinterleaved.map(payload => JSON.parse(new TextDecoder().decode(payload)))); // keep
                 if (carvedFromDeinterleaved.length > 0) {
                     log(`Raw byte carving (deinterleaved journal) in ${fileLabel}: ${carvedFromDeinterleaved.length} JSON payload(s)`);
                 }
@@ -1751,7 +3138,7 @@
             } else {
                 const carvedPayloads = carveJsonPayloadsFromBytes(file.buffer, perFileLimit);
                 if (carvedPayloads.length > 0) {
-                    console.log(carvedPayloads.map(payload => JSON.parse(new TextDecoder().decode(payload)))); // keep
+                    // console.log(carvedPayloads.map(payload => JSON.parse(new TextDecoder().decode(payload)))); // keep
                     const fileLabel = file.downloadName || file.name || 'sidecar';
                     log(`Raw byte carving in ${fileLabel}: ${carvedPayloads.length} JSON payload(s)`);
                 }
@@ -1887,6 +3274,7 @@
                 }
                 shows[id] = shows[id] ?? {};
                 shows[id]["id"] = shows[id]["id"] ?? show.meta?.id;
+                shows[id]["uuid"] = shows[id]["uuid"] ?? show.meta?.uuid ?? show.uuid;
                 shows[id]["name"] = shows[id]["name"] ?? show.meta?.name;
                 shows[id]["poster"] = shows[id]["poster"] ?? show.meta?.images[0];
                 // shows[id]["watched_episode_count"] = shows[id]["watched_episode_count"] ?? show.watched_episode_count;
@@ -1896,7 +3284,8 @@
                 shows[id]["is_up_to_date"] = shows[id]["is_up_to_date"] ?? show.filter.includes('up_to_date');
                 shows[id]["is_archived"] = shows[id]["is_archived"] ?? show.filter.includes('stopped');
                 shows[id]["is_for_later"] = shows[id]["is_for_later"] ?? show.filter.includes('watch_later');
-                shows[id]["is_favorite"] = shows[id]["is_favorite"] ?? show.is_favorite;
+                shows[id]["created_at"] = shows[id]["created_at"] ?? (show.created_at ? new Date(show.created_at) : shows[id]["created_at"]);
+                shows[id]["updated_at"] = shows[id]["updated_at"] ?? (show.updated_at ? new Date(show.updated_at) : shows[id]["updated_at"]);
 
                 for (let sorting of show.sorting ?? []) {
                     if (sorting.id == "watch_date" && sorting.value != 0) {
@@ -1923,6 +3312,8 @@
                 movies[id]["watched_at"] = movie.watched_at ? new Date(movie.watched_at) : movies[id]["watched_at"];
                 movies[id]["added_at"] = movie.created_at ? new Date(movie.created_at) : movies[id]["added_at"];
                 movies[id]["rewatch_count"] = movie.rewatch_count ?? movies[id]["rewatch_count"];
+                movies[id]["runtime"] = movie.runtime ?? movies[id]["runtime"];
+                movies[id]["first_release_date"] = movie.meta?.first_release_date ?? movies[id]["first_release_date"];
                 movie.meta?.external_sources?.forEach((val) => {
                     if (val.source == "tvdb") movies[id]["tvdb_id"] = movies[id]["tvdb_id"] ?? val.id;
                 })
@@ -1940,6 +3331,7 @@
                 towatch_movies[id]["poster"] = movie.meta?.posters?.[0] ?? towatch_movies[id]["poster"];
                 towatch_movies[id]["watched_at"] = movie.watched_at ? new Date(movie.watched_at) : towatch_movies[id]["watched_at"];
                 towatch_movies[id]["added_at"] = movie.created_at ? new Date(movie.created_at) : towatch_movies[id]["added_at"];
+                towatch_movies[id]["updated_at"] = movie.updated_at ? new Date(movie.updated_at) : towatch_movies[id]["updated_at"];
                 movie.meta?.external_sources?.forEach((val) => {
                     if (val.source == "tvdb") towatch_movies[id]["tvdb_id"] = towatch_movies[id]["tvdb_id"] ?? val.id;
                 })
@@ -2030,15 +3422,15 @@
                     if (data["status"] == "success" && data["data"]) {
                         data = data["data"];
                     }
-                    if ("follower_count" in data && data["type"] === undefined) {
+                    if ("follower_count" in data && data["type"] === undefined && data["name"] !== undefined) {
                         // console.log("user data", data)
                         user["follower_count"] = data["follower_count"];
-                        user["name"] = data["name"];
+                        user["name"] = user["name"] ?? data["name"];
                         user["id"] = data["id"];
-                    } else if ("following_count" in data && data["type"] === undefined) {
+                    } else if ("following_count" in data && data["type"] === undefined && data["name"] !== undefined) {
                         // console.log("user data", data)
                         user["following_count"] = data["following_count"];
-                        user["name"] = data["name"];
+                        user["name"] = user["name"] ?? data["name"];
                         user["id"] = data["id"];
 
                     } else if ("shows" in data) {
@@ -2048,6 +3440,7 @@
 
                     } else if (data.type == "list") {
                         if (!data["id"]) {
+                            // list of type: follow or towatch
                             for (let entity of data["objects"]) {
                                 extract_data_from_row(entity);
                             }
@@ -2114,11 +3507,18 @@
                 extract_data_from_row(data);
             }
             log("parsed all data")
-            console.log(shows);
+            console.log("Found Shows", shows);
             console.log(movies);
             console.log(towatch_movies);
             console.log(lists);
             console.log(user);
+
+            
+            try {
+                await hydrateMissingMoviesFromCatalog(movies);
+            } catch (e) {
+                console.log("Error hydrating missing movies from catalog", e);
+            }
             renderResults(shows, movies, towatch_movies, user, lists);
         }
 
