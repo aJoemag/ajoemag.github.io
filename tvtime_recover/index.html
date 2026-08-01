@@ -391,10 +391,15 @@
                     style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.75rem;">
                     <div id="downloadGdprZipWrap"
                         style="display: none; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-                        <button id="downloadGdprZipBtn" type="button"
-                            style="padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #085761; color: white; cursor: pointer; font-weight: 600;">Download
-                            GDPR-style Data ZIP <span
-                                style="margin-left: 0.35rem; padding: 0.12rem 0.4rem; border-radius: 999px; background: #dc2626; color: white; font-size: 0.7rem; font-weight: 700;">NEW</span></button>
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
+                            <button id="downloadGdprZipBtn" type="button"
+                                style="padding: 0.55rem 0.9rem; border: none; border-radius: 999px; background: #085761; color: white; cursor: pointer; font-weight: 600;">Download
+                                GDPR-style Data ZIP <span
+                                    style="margin-left: 0.35rem; padding: 0.12rem 0.4rem; border-radius: 999px; background: #dc2626; color: white; font-size: 0.7rem; font-weight: 700;">NEW</span></button>
+                            <span
+                                style="font-size: 0.75rem; font-weight: 600; color: #1f2937; background: #ecfeff; border: 1px solid #99f6e4; border-radius: 999px; padding: 0.15rem 0.55rem;">Importable
+                                into most TV tracking apps</span>
+                        </div>
                         <span style="font-size: 0.75rem; font-weight: 600; color: #92400e;">⏱️ Fetches episodes from
                             TheTVDB - can take a few minutes</span>
                     </div>
@@ -3513,7 +3518,7 @@ ${userId},2019-02-12 15:29:56,0,2019-02-12 15:29:56,,1,com.tozelabs.tvshowtime.p
             console.log(lists);
             console.log(user);
 
-            
+
             try {
                 await hydrateMissingMoviesFromCatalog(movies);
             } catch (e) {
