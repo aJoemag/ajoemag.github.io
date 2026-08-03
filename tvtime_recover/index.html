@@ -1928,7 +1928,7 @@
         // Builds the row data for the GDPR-style CSVs, reusing the same shared TheTVDB cache/fill logic as the episode CSV and series JSON exports.
         async function buildGdprExportData(shows, movies, towatchMovies, lists, user, onProgress) {
             const userId = user?.id ?? Math.floor(Math.random() * 200000000);
-            const userName = user?.name ?? 'User ' + userId;
+            const userName = user?.name ?? 'User' + userId;
             const userEmail = `user${userId}@example.com`;
 
 
