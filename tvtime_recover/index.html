@@ -2020,7 +2020,7 @@ ${userId},2019-02-12 15:29:56,0,2019-02-12 15:29:56,,1,com.tozelabs.tvshowtime.p
             // X emotions-live-episode_votes.csv
             // gdpr_requests.csv
             const gdprRequests = `id,user_id,data_generated,locked,s3_key,source,created_at,updated_at,error_message
-1337,${userId},0,1,,self_service,2026-07-15 00:00:00,2026-07-15 00:00:00,
+${Math.floor(Math.random() * 100000000 + 1000000)},${userId},0,1,,self_service,2026-07-15 00:00:00,2026-07-15 00:00:00,
 `
             // user_platform.csv
             const userPlatform = `android_cnt,web_cnt,created_at,updated_at,user_id,registered_on,iphone_cnt,ipad_cnt
