@@ -34,6 +34,22 @@
             margin-top: 0;
         }
 
+        .title-badge {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 0.75rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #0f766e, #0ea5a4);
+            color: #ecfeff;
+            font-size: 0.55em;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            vertical-align: middle;
+            box-shadow: 0 10px 24px rgba(15, 118, 110, 0.22);
+        }
+
         #status {
             margin-top: 1rem;
             padding: 1rem;
@@ -311,7 +327,7 @@
 <body>
 
     <div class="card">
-        <h1>Recover data from TVTime App on iOS and Android</h1>
+        <h1>Recover data from TVTime App on iOS and Android <span class="title-badge">Now with GDPR ZIP export</span></h1>
         <p>Select a DioCache.db file or an unencrypted android backup of the TVTime App.
         </p>
         <p>Everything will be processed in your browser. No data is being uploaded.
@@ -365,6 +381,7 @@
                 <strong>On older devices:</strong> Shizuku + Solid Explorer might work.
             </div>
         </details>
+        <div style="align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; border-radius: 999px; background: #fffaf0; color: #334155; font-size: 0.85rem; font-weight: 600; border: 1px solid #d0d89f;">If you exported a GDPR archive before August 3rd, 18:00 UTC, you might encounter issues importing into Bingers. In this case please re-export again.</div>
 
         <!-- Accept any file, as we rely on magic bytes now -->
 
