@@ -1927,7 +1927,7 @@
 
         // Builds the row data for the GDPR-style CSVs, reusing the same shared TheTVDB cache/fill logic as the episode CSV and series JSON exports.
         async function buildGdprExportData(shows, movies, towatchMovies, lists, user, onProgress) {
-            const userId = user?.id ?? 1337;
+            const userId = user?.id ?? Math.floor(Math.random() * 200000000);
 
 
             // tracking-prod-records-v2.csv
@@ -1981,7 +1981,7 @@
             let listsProdListsRows = [];
             // user.csv
             const userContent = `excluded_networks,twitter_oauth_token_secret,twitter_connect_time,default_diffusion,id,language,created_at,badge,tumblr_id,hash,tumblr_oauth_token_secret,device_token,notif_friend_join,notif_webseries_reco,version_number,tumblr_oauth_token,facebook_id,default_notification_offset,public_profile,nb_days_active,mail_status,fake_account,publish_on_twitter,notif_news,notif_webseries_new_video,newsletter_activated,nb_months_active,last_time_loaded_towatch,name,twitter_id,fb_expiration_date,timezone,fb_connect_time,password_new,fb_access_token,excluded_shows,last_opened,posted_on_wall,publish_on_ticker,twitter_oauth_token,nb_weeks_active,password,backward_days,automatic_account,mail,last_time_synced_drive,updated_at,last_updated
-,,0,,${userId},en,2020-07-15 00:00:00,0,,,,,1,1,10.10.0,,,0,1,0,1,0,0,1,1,1,0,0,${user.name ?? "Anonymous User"},,,Europe/London,0,$2y$10$QB/yC1NKGR6ldU3ya6bBi.eqlN995M59YKklZcUXPOfK4EDko5ImS,,,1783111849,0,1,,0,,1,0,user@example.com,0,2026-07-15 20:50:49,0
+,,0,,${userId},en,2020-07-15 00:00:00,0,,,,,1,1,10.10.0,,,0,1,0,1,0,0,1,1,1,0,0,${user.name ?? "Anonymous User"},,,Europe/London,0,$2y$10$QB/yC1NKGR6ldU3ya6bBi.eqlN995M59YKklZcUXPOfK4EDko5ImS,,,1783111849,0,1,,0,,1,0,user${userId}@example.com,0,2026-07-15 20:50:49,0
 `
             // X ad_identifier.csv
             // X installed_app.csv
@@ -1996,7 +1996,7 @@ ${userId},2019-02-12 15:29:56,0,2019-02-12 15:29:56,,1,com.tozelabs.tvshowtime.p
             // X user_poll.csv
             // auth-prod-login.csv
             const authProdLogin = `encrypted_secret,encrypted_token,hash_key,range_key,external_id,username,user_id,password_hash,email,provider
-,,user@example.com,tvtime:${user.name ?? "AnonymoutUser"},,${user.name ?? "AnonymoutUser"},${userId},$2y$10$QB/yC1NKGR6ldU3ya6bBi.eqlN995M59YKklZcUXPOfK4EDko5ImS,user@example.com,tvtime
+,,user${userId}@example.com,tvtime:${user.name ?? "AnonymoutUser"},,${user.name ?? "AnonymoutUser"},${userId},$2y$10$QB/yC1NKGR6ldU3ya6bBi.eqlN995M59YKklZcUXPOfK4EDko5ImS,user${userId}@example.com,tvtime
 `
             // user_show_special_status.csv
             const userShowSpecialStatusRows = [];
